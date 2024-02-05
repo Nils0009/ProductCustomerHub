@@ -11,7 +11,7 @@ public class OrderEntity
     [Required]
     public DateTime OrderDate { get; set; }
 
-    [ForeignKey(nameof(CustomerEntity))]
+    [ForeignKey(nameof(Customer))]
     public int CustomerNumber { get; set; }
-    public virtual CustomerEntity Customer { get; set; } = null!;
+    public CustomerEntity Customer { get; set; } = null!;
 }

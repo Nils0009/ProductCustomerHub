@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Contexts;
 
-public class CustomerManagementContext(DbContextOptions<CustomerManagementContext> options) : DbContext(options)
+public partial class CustomerManagementContext(DbContextOptions<CustomerManagementContext> options) : DbContext(options)
 {
 
     public virtual DbSet<CustomerEntity> Customers { get; set; }
