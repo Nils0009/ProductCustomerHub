@@ -5,7 +5,7 @@ namespace Infrastructure.Entities;
 public class CustomerAddressEntity
 {
     [ForeignKey(nameof(Customer))]
-    public int CustomerNumber { get; set; }
+    public string CustomerNumber { get; set; } = null!;
     public CustomerEntity Customer { get; set; } = null!;
 
     [ForeignKey(nameof(Address))]

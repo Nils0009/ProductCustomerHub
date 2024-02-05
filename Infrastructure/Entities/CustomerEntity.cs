@@ -8,7 +8,7 @@ namespace Infrastructure.Entities;
 public class CustomerEntity
 {
     [Key]
-    public int CustomerNumber { get; set; }
+    public string CustomerNumber { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "nvarchar(50)")]

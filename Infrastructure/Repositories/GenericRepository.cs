@@ -96,4 +96,19 @@ public abstract class GenericRepository<TEntity, TContext> where TEntity : class
         }
         return false;
     }
+
+    public virtual bool Exists(Expression<Func<TEntity, bool>> predicate)
+    {
+        try
+        {
+            var existingEntity = _context.Set<TEntity>().Any(predicate);
+            if (existingEntity)
+                return existingEntity;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
+        }
+        return false;
+    }
 }

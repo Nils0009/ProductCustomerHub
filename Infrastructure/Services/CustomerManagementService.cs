@@ -1,4 +1,6 @@
-﻿using Infrastructure.Repositories;
+﻿using Infrastructure.Dtos;
+using Infrastructure.Repositories;
+using System.Diagnostics;
 
 namespace Infrastructure.Services;
 
@@ -15,5 +17,18 @@ public class CustomerManagementService
         _customerAddressRepository = customerAddressRepository;
         _customerRepository = customerRepository;
         _roleRepository = roleRepository;
+    }
+
+    public bool CreateCustomer(CustomerDto customer)
+    {
+        try
+        {
+
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
+        }
+        return false;
     }
 }
