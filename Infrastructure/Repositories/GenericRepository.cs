@@ -59,15 +59,14 @@ public abstract class GenericRepository<TEntity, TContext> where TEntity : class
         }
         return null!;
     }
-    public virtual TEntity Update(TEntity entity)
+    public virtual TEntity Update(Expression<Func<TEntity, bool>> predicate, TEntity updatedEntity)
     {
         try
         {
-            var entityToUpdate = _context.Set<TEntity>().Find(entity);
-            if(entityToUpdate != null)
+            var entityToUpdate = _context.Set<TEntity>().FirstOrDefault(predicate);
+            if (entityToUpdate != null)
             {
-                entityToUpdate = entity;
-                _context.Set<TEntity>().Update(entityToUpdate);
+                _context.Entry(entityToUpdate).CurrentValues.SetValues(updatedEntity);
                 _context.SaveChanges();
                 return entityToUpdate;
             }
@@ -96,14 +95,12 @@ public abstract class GenericRepository<TEntity, TContext> where TEntity : class
         }
         return false;
     }
-
     public virtual bool Exists(Expression<Func<TEntity, bool>> predicate)
     {
         try
         {
             var existingEntity = _context.Set<TEntity>().Any(predicate);
-            if (existingEntity)
-                return existingEntity;
+            return existingEntity;
         }
         catch (Exception ex)
         {

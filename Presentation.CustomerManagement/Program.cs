@@ -5,6 +5,7 @@ using Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Presentation.CustomerManagement.Services;
 
 var builder = Host.CreateDefaultBuilder().ConfigureServices(services =>
 {
@@ -17,9 +18,13 @@ var builder = Host.CreateDefaultBuilder().ConfigureServices(services =>
     services.AddScoped<RoleRepository>();
     services.AddScoped<CustomerManagementService>();
     services.AddScoped<OrderPaymentManagementService>();
+    services.AddSingleton<MenuService>();
 
 }).Build();
 
 builder.Start();
+Console.Clear();
 
-Console.ReadKey();
+var menuService = builder.Services.GetRequiredService<MenuService>();
+menuService.ShowMainMenu();
+

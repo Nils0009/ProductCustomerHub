@@ -5,18 +5,12 @@ using System.Diagnostics;
 
 namespace Infrastructure.Services;
 
-public class CustomerManagementService
+public class CustomerManagementService(AddressRepository addressRepository, CustomerRepository customerRepository, RoleRepository roleRepository, CustomerAddressRepository customerAddressRepository)
 {
-    private readonly AddressRepository _addressRepository;
-    private readonly CustomerRepository _customerRepository;
-    private readonly RoleRepository _roleRepository;
-
-    public CustomerManagementService(AddressRepository addressRepository, CustomerRepository customerRepository, RoleRepository roleRepository)
-    {
-        _addressRepository = addressRepository;
-        _customerRepository = customerRepository;
-        _roleRepository = roleRepository;
-    }
+    private readonly AddressRepository _addressRepository = addressRepository;
+    private readonly CustomerRepository _customerRepository = customerRepository;
+    private readonly RoleRepository _roleRepository = roleRepository;
+    private readonly CustomerAddressRepository _customerAddressRepository = customerAddressRepository;
 
     public bool CreateCustomer(CustomerRegistrationDto customer)
     {
@@ -31,18 +25,21 @@ public class CustomerManagementService
                 });
 
                 var customerAddress = _addressRepository.GetOne(x =>
-                x.StreetName == customer.StreetName &&
-                x.City == customer.City &&
-                x.PostalCode == customer.PostalCode &&
-                x.Country == customer.Country);
+                    x.StreetName == customer.StreetName &&
+                    x.City == customer.City &&
+                    x.PostalCode == customer.PostalCode &&
+                    x.Country == customer.Country);
 
-                customerAddress ??= _addressRepository.Create(new AddressEntity
+                if (customerAddress == null)
                 {
-                    StreetName = customer.StreetName,
-                    City = customer.City,
-                    PostalCode = customer.PostalCode,
-                    Country = customer.Country
-                });
+                    customerAddress = _addressRepository.Create(new AddressEntity
+                    {
+                        StreetName = customer.StreetName,
+                        City = customer.City,
+                        PostalCode = customer.PostalCode,
+                        Country = customer.Country
+                    });
+                }
 
                 var newCustomer = new CustomerEntity
                 {
@@ -53,16 +50,21 @@ public class CustomerManagementService
                     RoleId = role.RoleId,
                 };
 
-                newCustomer.CustomerAddresses.Add(new CustomerAddressEntity
+                var createdCustomer = _customerRepository.Create(newCustomer);
+
+                if (createdCustomer != null)
                 {
-                    AddressId = customerAddress.AddressId
-                });
+                    var customerAddressEntity = new CustomerAddressEntity
+                    {
+                        CustomerNumber = createdCustomer.CustomerNumber,
+                        AddressId = customerAddress!.AddressId
+                    };
 
-                var result = _customerRepository.Create(newCustomer);
-                if (result != null)
+                    _customerAddressRepository.Create(customerAddressEntity);
+
                     return true;
+                }
             }
-
         }
         catch (Exception ex)
         {
@@ -107,48 +109,66 @@ public class CustomerManagementService
         return null!;
     }
 
-    public CustomerDto GetOneCustomer(string email)
+    public CustomerRegistrationDto GetOneCustomer(string email)
     {
         try
         {
-            var newCustomer = new CustomerDto();
+            var customer = new CustomerRegistrationDto();
             var existingCustomer = _customerRepository.GetOne(x => x.Email == email);
+
             if (existingCustomer != null)
             {
-                newCustomer.CustomerNumber = existingCustomer.CustomerNumber;
-                newCustomer.FirstName = existingCustomer.FirstName;
-                newCustomer.LastName = existingCustomer.LastName;
-                newCustomer.Email = existingCustomer.Email;
-                newCustomer.RoleName = existingCustomer.Role.RoleName;
+                customer.FirstName = existingCustomer.FirstName;
+                customer.LastName = existingCustomer.LastName;
+                customer.Email = existingCustomer.Email;
+                customer.RoleName = existingCustomer.Role.RoleName;
 
-                return newCustomer;
+                var firstAddress = existingCustomer.CustomerAddresses.FirstOrDefault();
+
+                if (firstAddress != null)
+                {
+                    customer.StreetName = firstAddress.Address.StreetName;
+                    customer.City = firstAddress.Address.City;
+                    customer.PostalCode = firstAddress.Address.PostalCode;
+                    customer.Country = firstAddress.Address.Country;
+                }
+
+                return customer;
             }
-
         }
         catch (Exception ex)
         {
             Debug.WriteLine(ex.Message);
         }
+
         return null!;
     }
 
-    public bool UpdateCustomer(CustomerRegistrationDto customer)
+    public bool UpdateCustomer(CustomerRegistrationDto customer, string email)
     {
         try
         {
-            var existingCustomer = _customerRepository.GetOne(x => x.Email == customer.Email);
+            var existingCustomer = _customerRepository.GetOne(x => x.Email == email);
 
             if (existingCustomer != null)
             {
-                var updateRole = _roleRepository.GetOne(x => x.RoleName == customer.RoleName);
-                updateRole ??= _roleRepository.Create(new RoleEntity { RoleName = customer.RoleName });
+                existingCustomer.FirstName = customer.FirstName;
+                existingCustomer.LastName = customer.LastName;
+                existingCustomer.Email = customer.Email;
 
-                var updateAddress = _addressRepository.GetOne(x =>
+                var role = _roleRepository.GetOne(x => x.RoleName == customer.RoleName);
+                role ??= _roleRepository.Create(new RoleEntity
+                {
+                    RoleName = customer.RoleName,
+                });
+
+                var customerAddress = _addressRepository.GetOne(x =>
                     x.StreetName == customer.StreetName &&
                     x.City == customer.City &&
                     x.PostalCode == customer.PostalCode &&
                     x.Country == customer.Country);
-                updateAddress ??= _addressRepository.Create(new AddressEntity
+
+                customerAddress ??= _addressRepository.Create(new AddressEntity
                 {
                     StreetName = customer.StreetName,
                     City = customer.City,
@@ -156,23 +176,18 @@ public class CustomerManagementService
                     Country = customer.Country
                 });
 
-                var updatedCustomer = new CustomerEntity
+                if (customerAddress != null)
                 {
-                    CustomerNumber = existingCustomer.CustomerNumber,
-                    FirstName = customer.FirstName,
-                    LastName = customer.LastName,
-                    Email = customer.Email,
-                    RoleId = updateRole.RoleId
-                };
+                    existingCustomer.CustomerAddresses.Clear();
 
-                existingCustomer.CustomerAddresses.Clear();
+                    existingCustomer.CustomerAddresses.Add(new CustomerAddressEntity
+                    {
+                        CustomerNumber = existingCustomer.CustomerNumber,
+                        AddressId = customerAddress.AddressId
+                    });
+                }
 
-                updatedCustomer.CustomerAddresses.Add(new CustomerAddressEntity
-                {
-                    AddressId = updateAddress.AddressId
-                });
-
-                _customerRepository.Update(updatedCustomer);
+                _customerRepository.Update(x => x.Email == email, existingCustomer);
 
                 return true;
             }
@@ -189,16 +204,13 @@ public class CustomerManagementService
     {
         try
         {
-            var existingCustomer = _customerRepository.Delete(x => x.Email == email);
-            if (existingCustomer)
-            {
-                return existingCustomer;
-            }         
+            return _customerRepository.Delete(x => x.Email == email);
         }
         catch (Exception ex)
         {
             Debug.WriteLine(ex.Message);
         }
+
         return false;
     }
 }
