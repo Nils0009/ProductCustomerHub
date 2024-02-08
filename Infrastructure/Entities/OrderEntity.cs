@@ -14,4 +14,5 @@ public class OrderEntity
     [ForeignKey(nameof(Customer))]
     public string CustomerNumber { get; set; } = null!;
     public CustomerEntity Customer { get; set; } = null!;
+    public PaymentMethodEntity PaymentMethod { get; set; } = null!;
 }

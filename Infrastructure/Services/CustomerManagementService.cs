@@ -143,6 +143,31 @@ public class CustomerManagementService(AddressRepository addressRepository, Cust
 
         return null!;
     }
+    public CustomerDto GetCustomerWithCustomerNumber(string customerNumber)
+    {
+        try
+        {
+            var customer = new CustomerDto();
+            var existingCustomer = _customerRepository.GetOne(x => x.CustomerNumber == customerNumber);
+
+            if (existingCustomer != null)
+            {
+                customer.CustomerNumber = existingCustomer.CustomerNumber;
+                customer.FirstName = existingCustomer.FirstName;
+                customer.LastName = existingCustomer.LastName;
+                customer.Email = existingCustomer.Email;
+                customer.RoleName = existingCustomer.Role.RoleName;
+
+                return customer;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
+        }
+
+        return null!;
+    }
 
     public bool UpdateCustomer(CustomerRegistrationDto customer, string email)
     {

@@ -15,6 +15,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
         {
             while (true)
             {
+
                 Console.WriteLine("##MENU##");
                 Console.WriteLine();
                 Console.WriteLine("[1] Customer Management");
@@ -77,22 +78,28 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                         Console.WriteLine("[4] Update Order");
                         Console.WriteLine("[5] Delete Order");
                         Console.WriteLine("[6] Exit");
-
                         int.TryParse(Console.ReadLine(), out int userOrderOption);
+
+                        Console.Clear();
                         switch (userOrderOption)
                         {
                             case 1:
-                                
+                                ShowAddOrderMenu();
                                 break;
                             case 2:
+                                ShowOrderSearchMenu();
                                 break;
                             case 3:
+                                ShowAllOrdersMenu();
                                 break;
                             case 4:
+                                ShowOrderUpdateMenu();
                                 break;
                             case 5:
+                                ShowRemoveOrderMenu();
                                 break;
                             case 6:
+                                ShowExitMenu();
                                 break;
                             default:
                                 Console.WriteLine("Enter a valid inpuit!");
@@ -117,6 +124,268 @@ public class MenuService(CustomerManagementService customerManagementService, Or
 
 
 
+
+    public void ShowAddOrderMenu()
+    {
+        try
+        {
+            while (true)
+            {
+                OrderRegistrationDto newOrder = new OrderRegistrationDto();
+
+                ShowMenuText("Add Order");
+                Console.WriteLine("-------------");
+                Console.WriteLine();
+                Console.Write("Customer number: ");
+                var existingCustomer = _customerManagementService.GetCustomerWithCustomerNumber(Console.ReadLine()!);
+
+                if (existingCustomer != null)
+                {
+                    ShowMenuText("The customer was found");
+                    Console.WriteLine("-------------------------");
+                    Console.WriteLine();
+                    Console.WriteLine($"Customer number: {existingCustomer.CustomerNumber}");
+                    Console.WriteLine($"First name: {existingCustomer.FirstName}");
+                    Console.WriteLine($"Last name: {existingCustomer.LastName}");
+                    Console.WriteLine($"Email: {existingCustomer.Email}");
+                    Console.WriteLine($"Role name: {existingCustomer.RoleName}");
+                    Console.WriteLine();
+
+                    Console.WriteLine("[1] Add customer to new order");
+                    Console.WriteLine("[2] Exit");
+                    int.TryParse(Console.ReadLine(), out int userInput);
+
+                    Console.Clear();
+
+                    switch (userInput)
+                    {
+                        case 1:
+                            newOrder.OrderDate = DateTime.Now;
+                            newOrder.CustomerNumber = existingCustomer.CustomerNumber;
+                            newOrder.FirstName = existingCustomer.FirstName;
+                            newOrder.LastName = existingCustomer.LastName;
+                            newOrder.Email = existingCustomer.Email;
+
+                            Console.Write("Payment method: ");
+                            newOrder.PaymentMethodName = ValidateText(Console.ReadLine()!);
+
+                            Console.Write("Description: ");
+                            newOrder.Description = Console.ReadLine()!;
+
+                            bool savedOrder = _orderPaymentManagementService.CreateOrder(newOrder);
+                            if (!savedOrder)
+                            {
+                                Console.WriteLine();
+                                Console.WriteLine("Order already exists");
+                                break;
+                            }
+
+                            Console.WriteLine();
+                            ShowMenuText("Order saved");
+                            Console.WriteLine("---------------");
+                            break;
+                        case 2:
+                            ShowExitMenu();
+                            break;
+                        default:
+                            Console.WriteLine("Not a valid input!");
+                            break;
+                    }
+                }
+                break;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
+        }
+    }
+    public void ShowAllOrdersMenu()
+    {
+        try
+        {
+            while (true)
+            {
+                ShowMenuText("Order list");
+                Console.WriteLine("--------------\n");
+
+                var orderList = _orderPaymentManagementService.GetAllOrders();
+                if (orderList != null)
+                {
+                    foreach (var order in orderList)
+                    {
+
+                        Console.WriteLine($"Order date: {order.OrderDate}\n" +
+                                          $"Order number: {order.OrderNumber}\n" +
+                                          $"Customer number: {order.CustomerNumber}\n" +
+                                          $"First name: {order.Customer.FirstName}\n" +
+                                          $"Last name: {order.Customer.LastName}\n" +
+                                          $"Email: {order.Customer.Email}\n" +
+                                          "\n-------------------\n");
+
+                    };
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("The order list is empty!");
+                    Console.WriteLine("--------------------------");
+                    break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
+        }
+    }
+    public void ShowOrderSearchMenu()
+    {
+        try
+        {
+            ShowMenuText("Search order");
+            Console.WriteLine("----------------\n");
+            Console.Write("Search order with order number: ");
+            int.TryParse(Console.ReadLine(), out int userInput);
+            var existingOrder = _orderPaymentManagementService.GetOneOrder(userInput);
+
+            Thread.Sleep(500);
+            Console.Clear();
+            if (existingOrder != null)
+            {
+                ShowMenuText("Order was found");
+                Console.WriteLine("-------------------");
+                Console.WriteLine($"Order date: {existingOrder.OrderDate}\n" +
+                                  $"Customer number: {existingOrder.CustomerNumber}\n" +
+                                  $"First name: {existingOrder.FirstName}\n" +
+                                  $"Last name: {existingOrder.LastName}\n" +
+                                  $"Email: {existingOrder.Email}\n" +
+                                  $"Payment Method: {existingOrder.PaymentMethodName}\n" +
+                                  $"Description: {existingOrder.Description}\n" +
+                                  $"Street name: {existingOrder.StreetName}\n" +
+                                  $"City: {existingOrder.City}\n" +
+                                  $"Country: {existingOrder.Country}\n" +
+                                  "\n-------------------\n");
+            }
+            else
+            {
+                ShowMenuText("Order was not found");
+                Console.WriteLine("------------------------");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex);
+        }
+
+    }
+    public void ShowOrderUpdateMenu()
+    {
+        try
+        {
+            while (true)
+            {
+                ShowMenuText("Update order");
+                Console.WriteLine("----------------\n");
+                Console.Write("Update order with order number: ");
+                int.TryParse(Console.ReadLine()!, out int userInput);
+                var orderToBeUpdated = _orderPaymentManagementService.GetOneOrder(userInput);
+                Thread.Sleep(500);
+                Console.Clear();
+
+
+                if (orderToBeUpdated != null)
+                {
+                    ShowMenuText("Order was found");
+                    Console.WriteLine("-------------------");
+                    Console.WriteLine();
+                    Console.WriteLine($"Order date: {orderToBeUpdated.OrderDate}\nCustomer number: {orderToBeUpdated.CustomerNumber}\nFirst name: {orderToBeUpdated.FirstName}\nLast name: {orderToBeUpdated.LastName}\nEmail: {orderToBeUpdated.Email}\nPayment method: {orderToBeUpdated.PaymentMethodName}\nDescription: {orderToBeUpdated.Description}");
+                    Console.Write("\nDo you want to update? (y/n): ");
+                    string OrderUpdateInput = ValidateText(Console.ReadLine()!);
+                    Thread.Sleep(500);
+                    Console.Clear();
+
+                    if (OrderUpdateInput == "y")
+                    {
+
+                        Console.Write("Payment method: ");
+                        var validatedPaymentmethod = Console.ReadLine()!;
+                        validatedPaymentmethod = ValidateText(validatedPaymentmethod);
+                        if (validatedPaymentmethod == null) { break; }
+                        orderToBeUpdated.PaymentMethodName = validatedPaymentmethod;
+
+
+                        Console.Write("Description: ");
+                        var validatedDescription = Console.ReadLine()!;
+                        validatedDescription = ValidateText(validatedDescription);
+                        if (validatedDescription == null) { break; }
+                        orderToBeUpdated.Description = validatedDescription;
+
+                        _orderPaymentManagementService.UpdateOrder(orderToBeUpdated, userInput);
+
+                        ShowMenuText("Order was updated");
+                        break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    ShowMenuText("Order was not found");
+                    Console.WriteLine("------------------------");
+                    break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
+        }
+    }
+    public void ShowRemoveOrderMenu()
+    {
+        try
+        {
+            while (true)
+            {
+                ShowMenuText("ORder customer");
+                Console.WriteLine("-----------------\n");
+                Console.Write("Remove customer with customer number: ");
+                int.TryParse(Console.ReadLine()!, out int orderRemoveInput);
+                var orderToRemoveFound = _orderPaymentManagementService.GetOneOrder(orderRemoveInput);
+
+                if (orderToRemoveFound != null)
+                {
+                    Console.WriteLine($"Order date: {orderToRemoveFound.OrderDate}\nCustomer number: {orderToRemoveFound.CustomerNumber}\nFirst name: {orderToRemoveFound.FirstName}\nLast name: {orderToRemoveFound.LastName}\nEmail: {orderToRemoveFound.Email}");
+                    Console.WriteLine();
+                    Console.Write("Do you want to remove? (y/n): ");
+                    string orderRemoveInputAnswer = ValidateText(Console.ReadLine()!);
+                    Thread.Sleep(500);
+                    Console.Clear();
+                    if (orderRemoveInputAnswer == "y")
+                    {
+                        var removeCustomer = _orderPaymentManagementService.DeleteOrder(orderToRemoveFound.CustomerNumber);
+                        ShowMenuText("Order was removed");
+                        Thread.Sleep(1000);
+                        break;
+                    }
+                }
+                if (orderToRemoveFound == null)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Order was not found!");
+                    break;
+                }
+                break;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
+        }
+    }
     public void ShowAddCustomerMenu()
     {
         try
@@ -239,25 +508,59 @@ public class MenuService(CustomerManagementService customerManagementService, Or
         {
             ShowMenuText("Search customer");
             Console.WriteLine("----------------\n");
-            Console.Write("Search customer with email: ");
-            var customerFound = _customerManagementService.GetOneCustomer(ValidateEmail(Console.ReadLine()!));
-            Thread.Sleep(500);
-            Console.Clear();
-            if (customerFound != null)
+            Console.WriteLine("[1] Search with email");
+            Console.WriteLine("[2] Search with customer number");
+            int.TryParse(Console.ReadLine(), out int result);
+
+            switch (result)
             {
-                ShowMenuText("Contact was found");
-                Console.WriteLine("-------------------");
-                Console.WriteLine($"First name: {customerFound.FirstName}\n" +
-                                  $"Last name: {customerFound.LastName}\n" +
-                                  $"Email: {customerFound.Email}\n" +
-                                  $"Role name: {customerFound.RoleName}\n" +
-                                  "\n-------------------\n");
+                case 1:
+                    Console.Write("Search customer with email: ");
+                    var customerFound = _customerManagementService.GetOneCustomer(ValidateEmail(Console.ReadLine()!));
+                    Thread.Sleep(500);
+                    Console.Clear();
+                    if (customerFound != null)
+                    {
+                        ShowMenuText("Contact was found");
+                        Console.WriteLine("-------------------");
+                        Console.WriteLine($"First name: {customerFound.FirstName}\n" +
+                                          $"Last name: {customerFound.LastName}\n" +
+                                          $"Email: {customerFound.Email}\n" +
+                                          $"Role name: {customerFound.RoleName}\n" +
+                                          "\n-------------------\n");
+                    }
+                    else
+                    {
+                        ShowMenuText("customer was not found");
+                        Console.WriteLine("------------------------");
+                    }
+                    break;
+                case 2:
+                    Console.Write("Search customer with customer number: ");
+                    var customer = _customerManagementService.GetCustomerWithCustomerNumber(Console.ReadLine()!);
+                    Thread.Sleep(500);
+                    Console.Clear();
+                    if (customer != null)
+                    {
+                        ShowMenuText("Contact was found");
+                        Console.WriteLine("-------------------");
+                        Console.WriteLine($"First name: {customer.FirstName}\n" +
+                                          $"Last name: {customer.LastName}\n" +
+                                          $"Email: {customer.Email}\n" +
+                                          $"Role name: {customer.RoleName}\n" +
+                                          "\n-------------------\n");
+                    }
+                    else
+                    {
+                        ShowMenuText("customer was not found");
+                        Console.WriteLine("------------------------");
+                    }
+                    break;
+                default:
+                    Console.WriteLine("Enter a valid input");
+                    break;
             }
-            else
-            {
-                ShowMenuText("customer was not found");
-                Console.WriteLine("------------------------");
-            }
+
         }
         catch (Exception ex)
         {
@@ -279,7 +582,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 Thread.Sleep(500);
                 Console.Clear();
 
-                
+
                 if (customerToBeUpdated != null)
                 {
                     ShowMenuText("Contact was found");
@@ -341,7 +644,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                         if (validatedCountry == null) { break; }
                         customerToBeUpdated.Country = validatedCountry;
 
-                       _customerManagementService.UpdateCustomer(customerToBeUpdated, customerUpdateEmailInput);
+                        _customerManagementService.UpdateCustomer(customerToBeUpdated, customerUpdateEmailInput);
 
                         ShowMenuText("Contact was updated");
                         break;
@@ -364,42 +667,77 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Debug.WriteLine(ex.Message);
         }
     }
-    public void ShowRemoveCustomerMenu() 
+    public void ShowRemoveCustomerMenu()
     {
         try
         {
-            while (true)
-            {
-                ShowMenuText("Delete customer");
-                Console.WriteLine("-----------------\n");
-                Console.Write("Remove customer with email: ");
-                string customerRemoveInput = ValidateEmail(Console.ReadLine()!);
-                var customerToRemoveFound = _customerManagementService.GetOneCustomer(customerRemoveInput);
 
-                if (customerToRemoveFound != null)
-                {
-                    Console.WriteLine($"\nFirst name: {customerToRemoveFound.FirstName}\nLast name: {customerToRemoveFound.LastName}\nEmail: {customerToRemoveFound.Email}\nRole name: {customerToRemoveFound.RoleName}\nStreet name: {customerToRemoveFound.StreetName}\nCity: {customerToRemoveFound.City}\nPostal code: {customerToRemoveFound.PostalCode}\nCountry: {customerToRemoveFound.Country}");
-                    Console.WriteLine();
-                    Console.Write("Do you want to remove? (y/n): ");
-                    string customerRemoveInputAnswer = ValidateText(Console.ReadLine()!);
-                    Thread.Sleep(500);
-                    Console.Clear();
-                    if (customerRemoveInputAnswer == "y")
+            ShowMenuText("Delete customer");
+            Console.WriteLine("-----------------\n");
+            Console.WriteLine("[1] Remove customer with email");
+            Console.WriteLine("[2] Remove customer with customer number");
+            int.TryParse(Console.ReadLine(), out var result);
+
+            switch (result)
+            {
+                case 1:
+                    Console.Write("Remove customer with email: ");
+                    string customerRemoveInput = ValidateEmail(Console.ReadLine()!);
+                    var customerToRemoveFound = _customerManagementService.GetOneCustomer(customerRemoveInput);
+
+                    if (customerToRemoveFound != null)
                     {
-                        var removeCustomer = _customerManagementService.DeleteCustomer(customerRemoveInput);
-                        ShowMenuText("Customer was removed");
-                        Thread.Sleep(1000);
-                        break;
+                        Console.WriteLine($"\nFirst name: {customerToRemoveFound.FirstName}\nLast name: {customerToRemoveFound.LastName}\nEmail: {customerToRemoveFound.Email}\nRole name: {customerToRemoveFound.RoleName}\nStreet name: {customerToRemoveFound.StreetName}\nCity: {customerToRemoveFound.City}\nPostal code: {customerToRemoveFound.PostalCode}\nCountry: {customerToRemoveFound.Country}");
+                        Console.WriteLine();
+                        Console.Write("Do you want to remove? (y/n): ");
+                        string customerRemoveInputAnswer = ValidateText(Console.ReadLine()!);
+                        Thread.Sleep(500);
+                        Console.Clear();
+                        if (customerRemoveInputAnswer == "y")
+                        {
+                            var removeCustomer = _customerManagementService.DeleteCustomer(customerRemoveInput);
+                            ShowMenuText("Customer was removed");
+                            Thread.Sleep(1000);
+                        }
                     }
-                }
-                if (customerToRemoveFound == null)
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("Customer was not found!");
+                    if (customerToRemoveFound == null)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Customer was not found!");
+                    }
                     break;
-                }
-                break;
+                case 2:
+                    Console.Write("Remove customer with customer number: ");
+                    string userRemoveInput = Console.ReadLine()!;
+                    var customerToRemove = _customerManagementService.GetCustomerWithCustomerNumber(userRemoveInput);
+
+                    if (customerToRemove != null)
+                    {
+                        Console.WriteLine($"\nFirst name: {customerToRemove.FirstName}\nLast name: {customerToRemove.LastName}\nEmail: {customerToRemove.Email}\nRole name: {customerToRemove.RoleName}");
+                        Console.WriteLine();
+                        Console.Write("Do you want to remove? (y/n): ");
+                        string customerRemoveInputAnswer = ValidateText(Console.ReadLine()!);
+                        Thread.Sleep(500);
+                        Console.Clear();
+                        if (customerRemoveInputAnswer == "y")
+                        {
+                            var removeCustomer = _customerManagementService.DeleteCustomer(customerToRemove.Email);
+                            ShowMenuText("Customer was removed");
+                            Thread.Sleep(1000);
+                        }
+                    }
+                    if (customerToRemove == null)
+                    {
+                        Console.WriteLine();
+                        Console.WriteLine("Customer was not found!");
+                    }
+                    break;
+                default:
+                    Console.WriteLine("Enter a valid input");
+                    break;
             }
+
+
         }
         catch (Exception ex)
         {
