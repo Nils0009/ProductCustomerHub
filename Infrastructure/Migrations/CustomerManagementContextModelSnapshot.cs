@@ -111,14 +111,14 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("PaymentMethodEntityPaymentMethodId")
+                    b.Property<int>("PaymentMethodId")
                         .HasColumnType("int");
 
                     b.HasKey("OrderNumber");
 
                     b.HasIndex("CustomerNumber");
 
-                    b.HasIndex("PaymentMethodEntityPaymentMethodId");
+                    b.HasIndex("PaymentMethodId");
 
                     b.ToTable("Orders");
                 });
@@ -205,11 +205,15 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Infrastructure.Entities.PaymentMethodEntity", null)
+                    b.HasOne("Infrastructure.Entities.PaymentMethodEntity", "PaymentMethod")
                         .WithMany("Orders")
-                        .HasForeignKey("PaymentMethodEntityPaymentMethodId");
+                        .HasForeignKey("PaymentMethodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Customer");
+
+                    b.Navigation("PaymentMethod");
                 });
 
             modelBuilder.Entity("Infrastructure.Entities.AddressEntity", b =>

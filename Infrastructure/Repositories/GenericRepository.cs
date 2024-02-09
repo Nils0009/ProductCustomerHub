@@ -67,6 +67,7 @@ public abstract class GenericRepository<TEntity, TContext> where TEntity : class
             if (entityToUpdate != null)
             {
                 _context.Entry(entityToUpdate).CurrentValues.SetValues(updatedEntity);
+                _context.Update(entityToUpdate);
                 _context.SaveChanges();
                 return entityToUpdate;
             }

@@ -18,7 +18,7 @@ var builder = Host.CreateDefaultBuilder().ConfigureServices(services =>
     services.AddScoped<RoleRepository>();
     services.AddScoped<CustomerManagementService>();
     services.AddScoped<OrderPaymentManagementService>();
-    services.AddSingleton<MenuService>();
+    services.AddScoped<MenuService>();
 
 }).Build();
 

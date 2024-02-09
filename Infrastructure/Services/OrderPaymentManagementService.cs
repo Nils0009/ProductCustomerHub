@@ -5,14 +5,12 @@ using System.Diagnostics;
 
 namespace Infrastructure.Services;
 
-public class OrderPaymentManagementService(OrderRepository orderRepository, PaymentMethodRepository paymentMethodRepository, CustomerRepository customerRepository, AddressRepository addressRepository, RoleRepository roleRepository, CustomerAddressRepository customerAddressRepository)
+public class OrderPaymentManagementService(OrderRepository orderRepository, PaymentMethodRepository paymentMethodRepository, CustomerRepository customerRepository)
 {
     private readonly OrderRepository _orderRepository = orderRepository;
     private readonly PaymentMethodRepository _paymentMethodRepository = paymentMethodRepository;
     private readonly CustomerRepository _customerRepository = customerRepository;
-    private readonly AddressRepository _addressRepository = addressRepository;
-    private readonly RoleRepository _roleRepository = roleRepository;
-    private readonly CustomerAddressRepository _customerAddressRepository = customerAddressRepository;
+
 
     public bool CreateOrder(OrderRegistrationDto order)
     {
@@ -88,7 +86,6 @@ public class OrderPaymentManagementService(OrderRepository orderRepository, Paym
 
         return Enumerable.Empty<OrderEntity>();
     }
-
     public OrderDto GetOneOrder(int orderNumber)
     {
         try
@@ -97,13 +94,13 @@ public class OrderPaymentManagementService(OrderRepository orderRepository, Paym
 
             if (existingOrder != null)
             {
-                var order = new OrderDto 
+                var order = new OrderDto
                 {
-                OrderDate = existingOrder.OrderDate,
-                CustomerNumber = existingOrder.CustomerNumber,
-                FirstName = existingOrder.Customer.FirstName,
-                LastName = existingOrder.Customer.LastName,
-                Email = existingOrder.Customer.Email,
+                    OrderDate = existingOrder.OrderDate,
+                    CustomerNumber = existingOrder.CustomerNumber,
+                    FirstName = existingOrder.Customer.FirstName,
+                    LastName = existingOrder.Customer.LastName,
+                    Email = existingOrder.Customer.Email,
                 };
 
                 var firstAddress = existingOrder.Customer.CustomerAddresses.FirstOrDefault();
@@ -116,7 +113,7 @@ public class OrderPaymentManagementService(OrderRepository orderRepository, Paym
                     order.Country = firstAddress.Address.Country;
                 }
 
-                var existingPaymentMethod = _paymentMethodRepository.GetOne(x => x.Orders == x.Orders);
+                var existingPaymentMethod = _paymentMethodRepository.GetOne(x => x.Orders.Any(o => o.OrderNumber == orderNumber));
                 if (existingPaymentMethod != null)
                 {
                     order.PaymentMethodName = existingPaymentMethod.PaymentMethodName;
@@ -132,29 +129,34 @@ public class OrderPaymentManagementService(OrderRepository orderRepository, Paym
 
         return null!;
     }
-
     public bool UpdateOrder(OrderDto order, int orderNumber)
     {
         try
         {
             var existingOrder = _orderRepository.GetOne(x => x.OrderNumber == orderNumber);
-
             if (existingOrder != null)
             {
-                var existingPaymentMethod = _paymentMethodRepository.GetAll();
+
+                existingOrder.OrderDate = order.OrderDate;
+                existingOrder.CustomerNumber = order.CustomerNumber;
+
+                var existingPaymentMethod = _paymentMethodRepository.GetOne(x => x.Orders.Any(o => o.OrderNumber == orderNumber));
 
                 if (existingPaymentMethod != null)
                 {
-                    foreach (var paymentMethod in existingPaymentMethod)
-                    {
-                        var orderToUpdate = paymentMethod.Orders.FirstOrDefault(o => o.OrderNumber == orderNumber);
+                    existingPaymentMethod.PaymentMethodName = order.PaymentMethodName;
+                    existingPaymentMethod.Description = order.Description;
 
-                        if (orderToUpdate != null)
-                        {
-                            orderToUpdate.PaymentMethod.PaymentMethodName = order.PaymentMethodName;
-                            orderToUpdate.PaymentMethod.Description = order.Description;
-                        }
-                    }
+                    _paymentMethodRepository.Update(x => x.PaymentMethodId == existingPaymentMethod.PaymentMethodId, existingPaymentMethod);
+                }
+                else
+                {
+                    existingPaymentMethod = _paymentMethodRepository.Create(new PaymentMethodEntity
+                    {
+                        PaymentMethodName = order.PaymentMethodName,
+                        Description = order.Description,
+                        Orders = new List<OrderEntity> { existingOrder }
+                    });
                 }
 
                 _orderRepository.Update(x => x.OrderNumber == orderNumber, existingOrder);
@@ -169,12 +171,21 @@ public class OrderPaymentManagementService(OrderRepository orderRepository, Paym
 
         return false;
     }
-
-    public bool DeleteOrder(string customerNumber)
+    public bool DeleteOrder(int orderNumber)
     {
         try
         {
-            return _orderRepository.Delete(x => x.CustomerNumber == customerNumber);
+            var existingOrder = _orderRepository.GetOne(x => x.OrderNumber == orderNumber);
+            if (existingOrder != null)
+            {
+                var existingPaymentMethod = _paymentMethodRepository.GetOne(x => x.Orders == x.Orders);
+                if (existingPaymentMethod != null)
+                {
+                    _paymentMethodRepository.Delete(x => x.PaymentMethodId == existingPaymentMethod.PaymentMethodId);
+                    _orderRepository.Delete(x => x.OrderNumber == orderNumber);
+                }
+            }
+            return true;
         }
         catch (Exception ex)
         {
@@ -184,3 +195,4 @@ public class OrderPaymentManagementService(OrderRepository orderRepository, Paym
         return false;
     }
 }
+

@@ -192,6 +192,11 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                             break;
                     }
                 }
+                else
+                {
+                    ShowMenuText("No customer was found");
+                    Console.WriteLine("-------------------------");
+                }
                 break;
             }
         }
@@ -210,7 +215,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 Console.WriteLine("--------------\n");
 
                 var orderList = _orderPaymentManagementService.GetAllOrders();
-                if (orderList != null)
+                if (orderList != null && orderList.Any())
                 {
                     foreach (var order in orderList)
                     {
@@ -230,8 +235,8 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 {
                     Console.WriteLine("The order list is empty!");
                     Console.WriteLine("--------------------------");
-                    break;
                 }
+                break;
             }
         }
         catch (Exception ex)
@@ -287,7 +292,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             {
                 ShowMenuText("Update order");
                 Console.WriteLine("----------------\n");
-                Console.Write("Update order with order number: ");
+                Console.Write("Order number: ");
                 int.TryParse(Console.ReadLine()!, out int userInput);
                 var orderToBeUpdated = _orderPaymentManagementService.GetOneOrder(userInput);
                 Thread.Sleep(500);
@@ -307,23 +312,18 @@ public class MenuService(CustomerManagementService customerManagementService, Or
 
                     if (OrderUpdateInput == "y")
                     {
-
-                        Console.Write("Payment method: ");
+                        Console.Write("Paymentmethod name:: ");
                         var validatedPaymentmethod = Console.ReadLine()!;
-                        validatedPaymentmethod = ValidateText(validatedPaymentmethod);
-                        if (validatedPaymentmethod == null) { break; }
                         orderToBeUpdated.PaymentMethodName = validatedPaymentmethod;
-
 
                         Console.Write("Description: ");
                         var validatedDescription = Console.ReadLine()!;
-                        validatedDescription = ValidateText(validatedDescription);
-                        if (validatedDescription == null) { break; }
                         orderToBeUpdated.Description = validatedDescription;
 
                         _orderPaymentManagementService.UpdateOrder(orderToBeUpdated, userInput);
 
                         ShowMenuText("Order was updated");
+
                         break;
                     }
                     else
@@ -350,15 +350,15 @@ public class MenuService(CustomerManagementService customerManagementService, Or
         {
             while (true)
             {
-                ShowMenuText("ORder customer");
+                ShowMenuText("Remove order");
                 Console.WriteLine("-----------------\n");
-                Console.Write("Remove customer with customer number: ");
+                Console.Write("Remove order with order number: ");
                 int.TryParse(Console.ReadLine()!, out int orderRemoveInput);
                 var orderToRemoveFound = _orderPaymentManagementService.GetOneOrder(orderRemoveInput);
 
                 if (orderToRemoveFound != null)
                 {
-                    Console.WriteLine($"Order date: {orderToRemoveFound.OrderDate}\nCustomer number: {orderToRemoveFound.CustomerNumber}\nFirst name: {orderToRemoveFound.FirstName}\nLast name: {orderToRemoveFound.LastName}\nEmail: {orderToRemoveFound.Email}");
+                    Console.WriteLine($"Order number: {orderToRemoveFound.OrderNumber}\nOrder date: {orderToRemoveFound.OrderDate}\nCustomer number: {orderToRemoveFound.CustomerNumber}\nFirst name: {orderToRemoveFound.FirstName}\nLast name: {orderToRemoveFound.LastName}\nEmail: {orderToRemoveFound.Email}");
                     Console.WriteLine();
                     Console.Write("Do you want to remove? (y/n): ");
                     string orderRemoveInputAnswer = ValidateText(Console.ReadLine()!);
@@ -366,7 +366,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                     Console.Clear();
                     if (orderRemoveInputAnswer == "y")
                     {
-                        var removeCustomer = _orderPaymentManagementService.DeleteOrder(orderToRemoveFound.CustomerNumber);
+                        var removeCustomer = _orderPaymentManagementService.DeleteOrder(orderRemoveInput);
                         ShowMenuText("Order was removed");
                         Thread.Sleep(1000);
                         break;
@@ -386,6 +386,8 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Debug.WriteLine(ex.Message);
         }
     }
+
+
     public void ShowAddCustomerMenu()
     {
         try
@@ -425,7 +427,6 @@ public class MenuService(CustomerManagementService customerManagementService, Or
 
                 Console.Write("Street name: ");
                 var validatedStreetName = Console.ReadLine()!;
-                validatedStreetName = ValidateNum(validatedStreetName);
                 if (validatedStreetName == null) { break; }
                 newCustomer.StreetName = validatedStreetName;
 
@@ -526,6 +527,10 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                         Console.WriteLine($"First name: {customerFound.FirstName}\n" +
                                           $"Last name: {customerFound.LastName}\n" +
                                           $"Email: {customerFound.Email}\n" +
+                                          $"Street name: {customerFound.StreetName}\n" +
+                                          $"City: {customerFound.City}\n" +
+                                          $"Postalcode: {customerFound.PostalCode}\n" +
+                                          $"Country: {customerFound.Country}\n" +
                                           $"Role name: {customerFound.RoleName}\n" +
                                           "\n-------------------\n");
                     }
@@ -588,7 +593,16 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                     ShowMenuText("Contact was found");
                     Console.WriteLine("-------------------");
                     Console.WriteLine();
-                    Console.WriteLine($"First name: {customerToBeUpdated.FirstName}\nLast name: {customerToBeUpdated.LastName}\nEmail: {customerToBeUpdated.Email}");
+                    Console.WriteLine($"First name: {customerToBeUpdated.FirstName}\n" +
+                                          $"Last name: {customerToBeUpdated.LastName}\n" +
+                                          $"Email: {customerToBeUpdated.Email}\n" +
+                                          $"Street name: {customerToBeUpdated.StreetName}\n" +
+                                          $"City: {customerToBeUpdated.City}\n" +
+                                          $"Postalcode: {customerToBeUpdated.PostalCode}\n" +
+                                          $"Country: {customerToBeUpdated.Country}\n" +
+                                          $"Role name: {customerToBeUpdated.RoleName}\n" +
+                                          "\n-------------------\n");
+
                     Console.Write("\nDo you want to update? (y/n): ");
                     string CustomerUpdateAnswerInput = ValidateText(Console.ReadLine()!);
                     Thread.Sleep(500);
@@ -599,49 +613,40 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                         Console.Write("First name: ");
                         var validatedFirstname = Console.ReadLine()!;
                         validatedFirstname = ValidateText(validatedFirstname);
-                        if (validatedFirstname == null) { break; }
                         customerToBeUpdated.FirstName = validatedFirstname;
 
                         Console.Write("Last name: ");
                         var validatedLastName = Console.ReadLine()!;
                         validatedLastName = ValidateText(validatedLastName);
-                        if (validatedLastName == null) { break; }
                         customerToBeUpdated.LastName = validatedLastName;
 
                         Console.Write("Email: ");
                         var validatedEmail = Console.ReadLine()!;
                         validatedEmail = ValidateEmail(validatedEmail);
-                        if (validatedEmail == null) { break; }
                         customerToBeUpdated.Email = validatedEmail;
 
                         Console.Write("Role name: ");
                         var validatedRoleName = Console.ReadLine()!;
                         validatedRoleName = ValidateText(validatedRoleName);
-                        if (validatedRoleName == null) { break; }
                         customerToBeUpdated.RoleName = validatedRoleName;
 
                         Console.Write("Street name: ");
                         var validatedStreetName = Console.ReadLine()!;
-                        validatedStreetName = ValidateText(validatedStreetName);
-                        if (validatedStreetName == null) { break; }
                         customerToBeUpdated.StreetName = validatedStreetName;
 
                         Console.Write("City: ");
                         var validatedCity = Console.ReadLine()!;
                         validatedCity = ValidateText(validatedCity);
-                        if (validatedCity == null) { break; }
                         customerToBeUpdated.City = validatedCity;
 
                         Console.Write("Postal code: ");
                         var validatedPostalCode = Console.ReadLine()!;
                         validatedPostalCode = ValidateNum(validatedPostalCode);
-                        if (validatedPostalCode == null) { break; }
                         customerToBeUpdated.PostalCode = validatedPostalCode;
 
                         Console.Write("Country: ");
                         var validatedCountry = Console.ReadLine()!;
                         validatedCountry = ValidateText(validatedCountry);
-                        if (validatedCountry == null) { break; }
                         customerToBeUpdated.Country = validatedCountry;
 
                         _customerManagementService.UpdateCustomer(customerToBeUpdated, customerUpdateEmailInput);
@@ -744,6 +749,8 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Debug.WriteLine(ex.Message);
         }
     }
+
+
     public static void ShowExitMenu()
     {
         try
@@ -769,43 +776,34 @@ public class MenuService(CustomerManagementService customerManagementService, Or
 
     public static string ValidateText(string text)
     {
-        if (!string.IsNullOrEmpty(text) && !text!.Any(char.IsDigit))
+        if (!string.IsNullOrWhiteSpace(text) && !text.Any(char.IsDigit))
         {
-            return text!.ToLower();
+            return text.ToLower();
         }
 
-        else
-        {
-            Console.WriteLine("Invalid input!");
-            return null!;
-        }
-
+        Console.WriteLine("Invalid input!");
+        return null!;
     }
+
     public static string ValidateNum(string text)
     {
-        if (!string.IsNullOrEmpty(text))
+        if (!string.IsNullOrWhiteSpace(text))
         {
-            return text!.ToLower();
+            return text.ToLower();
         }
 
-        else
-        {
-            Console.WriteLine("Invalid input!");
-            return null!;
-        }
-
+        Console.WriteLine("Invalid input!");
+        return null!;
     }
+
     public static string ValidateEmail(string text)
     {
-        if (!string.IsNullOrEmpty(text) && text!.Contains("@"))
+        if (!string.IsNullOrWhiteSpace(text) && text.Contains("@"))
         {
-            return text!.ToLower();
+            return text.ToLower();
         }
 
-        else
-        {
-            Console.WriteLine("Invalid input!");
-            return null!;
-        }
+        Console.WriteLine("Invalid input!");
+        return null!;
     }
 }
