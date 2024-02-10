@@ -1,4 +1,9 @@
-﻿CREATE TABLE Categories (
+﻿DROP TABLE Products
+DROP TABLE Prices
+DROP TABLE Manufacturer
+DROP TABLE Categories
+
+CREATE TABLE Categories (
 	Id int not null identity primary key,
 	CategoryName nvarchar(100) not null unique
 )
@@ -14,7 +19,7 @@ CREATE TABLE Prices(
 )
 
 CREATE TABLE Products (
-	ArticleNumber nvarchar(20) not null primary key,
+	ArticleNumber nvarchar(250) not null primary key,
 	Title nvarchar(250) not null,
 	Description nvarchar(max) not null,
 	CategoryId int not null references Categories(Id),

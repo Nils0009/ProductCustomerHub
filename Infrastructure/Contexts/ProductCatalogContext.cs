@@ -5,31 +5,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Contexts;
 
-public partial class ProductCatalogContext : DbContext
+public partial class ProductCatalogContext(DbContextOptions<ProductCatalogContext> options) : DbContext(options)
 {
-    public ProductCatalogContext()
-    {
-    }
+    public virtual DbSet<CategoryEntity> Categories { get; set; }
 
-    public ProductCatalogContext(DbContextOptions<ProductCatalogContext> options)
-        : base(options)
-    {
-    }
+    public virtual DbSet<ManufacturerEntity> Manufacturers { get; set; }
 
-    public virtual DbSet<Category> Categories { get; set; }
+    public virtual DbSet<PriceEntity> Prices { get; set; }
 
-    public virtual DbSet<Manufacturer> Manufacturers { get; set; }
+    public virtual DbSet<ProductEntity> Products { get; set; }
 
-    public virtual DbSet<Price> Prices { get; set; }
-
-    public virtual DbSet<Product> Products { get; set; }
-
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=C:\\Projects\\ProductCustomerHub\\Infrastructure\\Data\\ProductCatalog.mdf;Integrated Security=True;Connect Timeout=30;Encrypt=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Category>(entity =>
+        modelBuilder.Entity<CategoryEntity>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Categori__3214EC07FFC707B4");
 
@@ -38,31 +27,31 @@ public partial class ProductCatalogContext : DbContext
             entity.Property(e => e.CategoryName).HasMaxLength(100);
         });
 
-        modelBuilder.Entity<Manufacturer>(entity =>
+        modelBuilder.Entity<ManufacturerEntity>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Manufact__3214EC0710A0E8C9");
 
             entity.ToTable("Manufacturer");
 
-            entity.HasIndex(e => e.Manufacturer1, "UQ__Manufact__D194335A33173037").IsUnique();
+            entity.HasIndex(e => e.Manufacturer, "UQ__Manufact__D194335A33173037").IsUnique();
 
-            entity.Property(e => e.Manufacturer1)
+            entity.Property(e => e.Manufacturer)
                 .HasMaxLength(200)
                 .HasColumnName("Manufacturer");
         });
 
-        modelBuilder.Entity<Price>(entity =>
+        modelBuilder.Entity<PriceEntity>(entity =>
         {
             entity.HasKey(e => e.Id).HasName("PK__Prices__3214EC0759A67044");
 
             entity.Property(e => e.UnitPrice).HasColumnType("money");
         });
 
-        modelBuilder.Entity<Product>(entity =>
+        modelBuilder.Entity<ProductEntity>(entity =>
         {
             entity.HasKey(e => e.ArticleNumber).HasName("PK__Products__3C9911434AEABFFC");
 
-            entity.Property(e => e.ArticleNumber).HasMaxLength(20);
+            entity.Property(e => e.ArticleNumber).HasMaxLength(250);
             entity.Property(e => e.Title).HasMaxLength(250);
 
             entity.HasOne(d => d.Category).WithMany(p => p.Products)

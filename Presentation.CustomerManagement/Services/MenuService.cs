@@ -1,13 +1,16 @@
 ﻿using Infrastructure.Dtos;
+using Infrastructure.Entities;
+using Infrastructure.Migrations;
 using Infrastructure.Services;
 using System.Diagnostics;
 
 namespace Presentation.CustomerManagement.Services;
 
-public class MenuService(CustomerManagementService customerManagementService, OrderPaymentManagementService orderPaymentManagementService)
+public class MenuService(CustomerManagementService customerManagementService, OrderPaymentManagementService orderPaymentManagementService, ProductCatalogService productCatalogService)
 {
     private readonly CustomerManagementService _customerManagementService = customerManagementService;
     private readonly OrderPaymentManagementService _orderPaymentManagementService = orderPaymentManagementService;
+    private readonly ProductCatalogService _productCatalogService = productCatalogService;
 
     public void ShowMainMenu()
     {
@@ -20,7 +23,8 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 Console.WriteLine();
                 Console.WriteLine("[1] Customer Management");
                 Console.WriteLine("[2] Order Management");
-                Console.WriteLine("[3] Exit");
+                Console.WriteLine("[3] Product Management");
+                Console.WriteLine("[4] Exit");
                 int.TryParse(Console.ReadLine(), out int userOption);
 
                 Console.Clear();
@@ -109,6 +113,45 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                         Console.Clear();
                         break;
                     case 3:
+                        Console.WriteLine("Product menu");
+                        Console.WriteLine();
+                        Console.WriteLine("[1] Add Product");
+                        Console.WriteLine("[2] Get Product");
+                        Console.WriteLine("[3] Get All Products");
+                        Console.WriteLine("[4] Update Product");
+                        Console.WriteLine("[5] Delete Product");
+                        Console.WriteLine("[6] Exit");
+                        int.TryParse(Console.ReadLine(), out int userProductOption);
+
+                        Console.Clear();
+                        switch (userProductOption)
+                        {
+                            case 1:
+                                ShowAddProductMenu();
+                                break;
+                            case 2:
+                                ShowProductSearchMenu();
+                                break;
+                            case 3:
+                                ShowAllProductsMenu();
+                                break;
+                            case 4:
+                                ShowProductUpdateMenu();
+                                break;
+                            case 5:
+                                ShowRemoveProductMenu();
+                                break;
+                            case 6:
+                                ShowExitMenu();
+                                break;
+                            default:
+                                Console.WriteLine("Enter a valid inpuit!");
+                                break;
+                        }
+                        Console.ReadKey();
+                        Console.Clear();
+                        break;
+                    case 4:
                         ShowExitMenu();
                         break;
                     default:
@@ -122,6 +165,268 @@ public class MenuService(CustomerManagementService customerManagementService, Or
         }
     }
 
+
+    public void ShowAddProductMenu()
+    {
+        try
+        {
+            while (true)
+            {
+                ProductEntity newProduct = new ProductEntity();
+                CategoryEntity newCategory = new CategoryEntity();
+                ManufacturerEntity newManufacturer = new ManufacturerEntity();
+                PriceEntity newPrice = new PriceEntity();
+
+                ShowMenuText("Add Product");
+                Console.WriteLine("-------------");
+                Console.WriteLine();
+
+                Console.Write("Title: ");
+                var validatedTitle = Console.ReadLine()!;
+                newProduct.Title = validatedTitle;
+
+                Console.Write("Description: ");
+                var validatedDescription = Console.ReadLine()!;
+                newProduct.Description = validatedDescription;
+
+                Console.Write("Category: ");
+                var validatedCategory = Console.ReadLine()!;
+                validatedCategory = ValidateText(validatedCategory);
+                if (validatedCategory == null) { break; }
+                newCategory.CategoryName = validatedCategory;
+                newProduct.Category = newCategory; // Tilldela rätt instans till newProduct.Category
+
+                Console.Write("Manufacturer: ");
+                var validatedManufacturer = Console.ReadLine()!;
+                validatedManufacturer = ValidateText(validatedManufacturer);
+                if (validatedManufacturer == null) { break; }
+                newManufacturer.Manufacturer = validatedManufacturer;
+                newProduct.Manufacturer = newManufacturer; // Tilldela rätt instans till newProduct.Manufacturer
+
+                Console.Write("Price: ");
+                int.TryParse(Console.ReadLine()!, out int validatedPrice);
+                newPrice.UnitPrice = validatedPrice;
+                newProduct.Price = newPrice; // Tilldela rätt instans till newProduct.Price
+
+                var savedProduct = _productCatalogService.CreateProduct(newProduct);
+                if (savedProduct == false)
+                {
+                    Console.WriteLine();
+                    Console.WriteLine("Product already in the list");
+                    break;
+                }
+
+                Console.WriteLine();
+                ShowMenuText("Product saved");
+                Console.WriteLine("---------------");
+
+                break;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
+        }
+    }
+    public void ShowAllProductsMenu()
+    {
+        try
+        {
+            while (true)
+            {
+                ShowMenuText("Products list");
+                Console.WriteLine("--------------\n");
+
+                var productList = _productCatalogService.GetAllProducts();
+                if (productList != null && productList.Any())
+                {
+                    foreach (var product in productList)
+                    {
+
+                        Console.WriteLine($"Article Number: {product.ArticleNumber}\n" +
+                                          $"Title: {product.Title}\n" +
+                                          $"Description: {product.Description}\n" +
+                                          "\n-------------------\n");
+
+                    };
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine("The product list is empty!");
+                    Console.WriteLine("--------------------------");
+                }
+                break;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
+        }
+    }
+    public void ShowProductSearchMenu()
+    {
+        try
+        {
+            ShowMenuText("Search product");
+            Console.WriteLine("----------------\n");
+            Console.Write("Search with article number: ");
+            var userInput = Console.ReadLine();
+            if (userInput != null)
+            {
+                var existingProduct = _productCatalogService.GetOneProduct(userInput);
+                if (existingProduct != null)
+                {
+                    ShowMenuText("Product was found");
+                    Console.WriteLine("-------------------");
+                    Console.WriteLine($"Article number: {existingProduct.ArticleNumber}\n" +
+                                      $"Title: {existingProduct.Title}\n" +
+                                      $"Description: {existingProduct.Description}\n" +
+                                      $"Manufacturer: {existingProduct.Manufacturer.Manufacturer}\n" +
+                                      $"Category: {existingProduct.Category.CategoryName}\n" +
+                                      $"Price: {existingProduct.Price.UnitPrice}\n" +
+                                      "\n-------------------\n");
+                }
+            }
+
+
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex);
+        }
+
+    }
+
+    public void ShowProductUpdateMenu()
+    {
+        try
+        {
+            while (true)
+            {
+                ShowMenuText("Update product");
+                Console.WriteLine("----------------\n");
+                Console.Write("Update product with article number: ");
+                string productUpdateInput = Console.ReadLine()!;
+                var productToBeUpdated = _productCatalogService.GetOneProduct(productUpdateInput);
+                Thread.Sleep(500);
+                Console.Clear();
+
+                if (productToBeUpdated != null)
+                {
+                    ShowMenuText("Product was found");
+                    Console.WriteLine("-------------------");
+                    Console.WriteLine($"Article number: {productToBeUpdated.ArticleNumber}\n" +
+                                      $"Title: {productToBeUpdated.Title}\n" +
+                                      $"Description: {productToBeUpdated.Description}\n" +
+                                      $"Manufacturer: {productToBeUpdated.Manufacturer.Manufacturer}\n" +
+                                      $"Category: {productToBeUpdated.Category.CategoryName}\n" +
+                                      $"Price: {productToBeUpdated.Price.UnitPrice}\n" +
+                                      "\n-------------------\n");
+
+
+                    Console.Write("\nDo you want to update? (y/n): ");
+                    string ProductUpdateAnswerInput = ValidateText(Console.ReadLine()!);
+                    Thread.Sleep(500);
+                    Console.Clear();
+
+                    if (ProductUpdateAnswerInput == "y")
+                    {
+                        Console.Write("Title: ");
+                        var validatedTitle = Console.ReadLine()!;
+                        validatedTitle = ValidateAll(validatedTitle);
+                        productToBeUpdated.Title = validatedTitle;
+
+                        Console.Write("Description: ");
+                        var validatedDescription = Console.ReadLine()!;
+                        validatedDescription = ValidateAll(validatedDescription);
+                        productToBeUpdated.Description = validatedDescription;
+
+                        Console.Write("Manufacturer: ");
+                        var validatedManufacturer = Console.ReadLine()!;
+                        validatedManufacturer = ValidateAll(validatedManufacturer);
+                        productToBeUpdated.Manufacturer.Manufacturer = validatedManufacturer;
+
+                        Console.Write("Category: ");
+                        var validatedCategory = Console.ReadLine()!;
+                        validatedCategory = ValidateAll(validatedCategory);
+                        productToBeUpdated.Category.CategoryName = validatedCategory;
+
+                        Console.Write("Price: ");
+                        int.TryParse(Console.ReadLine()!, out int validatedPrice);
+                        productToBeUpdated.Price.UnitPrice = validatedPrice;
+
+
+
+                        _productCatalogService.UpdateProduct(productToBeUpdated, productUpdateInput);
+
+                        ShowMenuText("Product was updated");
+                        break;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    ShowMenuText("Product was not found");
+                    Console.WriteLine("------------------------");
+                    break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
+        }
+    }
+    public void ShowRemoveProductMenu()
+    {
+        try
+        {
+
+            ShowMenuText("Delete product");
+            Console.WriteLine("-----------------\n");
+            Console.Write("Remove product with article number: ");
+            string userRemoveInput = Console.ReadLine()!;
+            var productToRemove = _productCatalogService.GetOneProduct(userRemoveInput);
+
+            if (productToRemove != null)
+            {
+                ShowMenuText("Product was found");
+                Console.WriteLine("-------------------");
+                Console.WriteLine($"Article number: {productToRemove.ArticleNumber}\n" +
+                                  $"Title: {productToRemove.Title}\n" +
+                                  $"Description: {productToRemove.Description}\n" +
+                                  $"Manufacturer: {productToRemove.Manufacturer.Manufacturer}\n" +
+                                  $"Category: {productToRemove.Category.CategoryName}\n" +
+                                  $"Price: {productToRemove.Price.UnitPrice}\n" +
+                                  "\n-------------------\n");
+
+                Console.Write("Do you want to remove? (y/n): ");
+                string productRemoveInputAnswer = ValidateText(Console.ReadLine()!);
+                Thread.Sleep(500);
+                Console.Clear();
+                if (productRemoveInputAnswer == "y")
+                {
+                    var removeProduct = _productCatalogService.DeleteProduct(userRemoveInput);
+                    ShowMenuText("Product was removed");
+                    Thread.Sleep(1000);
+                }
+            }
+            if (productToRemove == null)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Product was not found!");
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
+        }
+    }
 
 
 
@@ -779,6 +1084,17 @@ public class MenuService(CustomerManagementService customerManagementService, Or
         if (!string.IsNullOrWhiteSpace(text) && !text.Any(char.IsDigit))
         {
             return text.ToLower();
+        }
+
+        Console.WriteLine("Invalid input!");
+        return null!;
+    }
+
+    public static string ValidateAll(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            return value.ToLower();
         }
 
         Console.WriteLine("Invalid input!");
