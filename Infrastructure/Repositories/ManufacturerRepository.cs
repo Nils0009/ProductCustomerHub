@@ -3,11 +3,7 @@ using Infrastructure.Entities;
 
 namespace Infrastructure.Repositories;
 
-public class ManufacturerRepository : GenericRepository<ManufacturerEntity, ProductCatalogContext>
+public class ManufacturerRepository(ProductCatalogContext context) : GenericRepository<ManufacturerEntity, ProductCatalogContext>(context)
 {
-    private readonly ProductCatalogContext _context;
-    public ManufacturerRepository(ProductCatalogContext context) : base(context)
-    {
-        _context = context;
-    }
+    private readonly ProductCatalogContext _context = context;
 }

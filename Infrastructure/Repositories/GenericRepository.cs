@@ -12,12 +12,12 @@ public abstract class GenericRepository<TEntity, TContext> where TEntity : class
         _context = context;
     }
 
-    public virtual TEntity Create(TEntity entity)
+    public virtual async Task<TEntity> Create(TEntity entity)
     {
         try
         {
             _context.Set<TEntity>().Add(entity);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return entity;
         }
         catch (Exception ex)
@@ -26,16 +26,13 @@ public abstract class GenericRepository<TEntity, TContext> where TEntity : class
         }
         return null!;
     }
-    public virtual IEnumerable<TEntity> GetAll()
-    {
-        try
-        {
-            var allEntities = _context.Set<TEntity>().ToList();
-            if (allEntities != null)
-            {
-                return allEntities;
-            }
 
+    public virtual async Task<IEnumerable<TEntity>> GetAll()
+    {
+        try
+        {
+            var allEntities = await _context.Set<TEntity>().ToListAsync();
+            return allEntities;
         }
         catch (Exception ex)
         {
@@ -43,32 +40,30 @@ public abstract class GenericRepository<TEntity, TContext> where TEntity : class
         }
         return null!;
     }
-    public virtual TEntity GetOne(Expression<Func<TEntity, bool>> predicate)
+
+    public virtual async Task<TEntity> GetOne(Expression<Func<TEntity, bool>> predicate)
     {
         try
         {
-            var entityToFind = _context.Set<TEntity>().FirstOrDefault(predicate);
-            if (entityToFind != null)
-            {
-                return entityToFind;
-            }
+            var entityToFind = await _context.Set<TEntity>().FirstOrDefaultAsync(predicate);
+            return entityToFind!;
         }
         catch (Exception ex)
         {
             Debug.WriteLine(ex.Message);
         }
-        return null!;
+        return null;
     }
-    public virtual TEntity Update(Expression<Func<TEntity, bool>> predicate, TEntity updatedEntity)
+
+    public virtual async Task<TEntity> Update(Expression<Func<TEntity, bool>> predicate, TEntity updatedEntity)
     {
         try
         {
-            var entityToUpdate = _context.Set<TEntity>().FirstOrDefault(predicate);
+            var entityToUpdate = await _context.Set<TEntity>().FirstOrDefaultAsync(predicate);
             if (entityToUpdate != null)
             {
                 _context.Entry(entityToUpdate).CurrentValues.SetValues(updatedEntity);
-                _context.Update(entityToUpdate);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return entityToUpdate;
             }
         }
@@ -78,15 +73,16 @@ public abstract class GenericRepository<TEntity, TContext> where TEntity : class
         }
         return null!;
     }
-    public virtual bool Delete(Expression<Func<TEntity, bool>> predicate)
+
+    public virtual async Task<bool> Delete(Expression<Func<TEntity, bool>> predicate)
     {
         try
         {
-            var entityToRemove = _context.Set<TEntity>().FirstOrDefault(predicate);
+            var entityToRemove = await _context.Set<TEntity>().FirstOrDefaultAsync(predicate);
             if (entityToRemove != null)
             {
                 _context.Set<TEntity>().Remove(entityToRemove);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 return true;
             }
         }
@@ -96,11 +92,12 @@ public abstract class GenericRepository<TEntity, TContext> where TEntity : class
         }
         return false;
     }
-    public virtual bool Exists(Expression<Func<TEntity, bool>> predicate)
+
+    public virtual async Task<bool> Exists(Expression<Func<TEntity, bool>> predicate)
     {
         try
         {
-            var existingEntity = _context.Set<TEntity>().Any(predicate);
+            var existingEntity = await _context.Set<TEntity>().AnyAsync(predicate);
             return existingEntity;
         }
         catch (Exception ex)

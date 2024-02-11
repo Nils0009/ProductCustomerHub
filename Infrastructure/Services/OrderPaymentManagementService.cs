@@ -3,196 +3,208 @@ using Infrastructure.Entities;
 using Infrastructure.Repositories;
 using System.Diagnostics;
 
-namespace Infrastructure.Services;
 
-public class OrderPaymentManagementService(OrderRepository orderRepository, PaymentMethodRepository paymentMethodRepository, CustomerRepository customerRepository)
+namespace Infrastructure.Services
 {
-    private readonly OrderRepository _orderRepository = orderRepository;
-    private readonly PaymentMethodRepository _paymentMethodRepository = paymentMethodRepository;
-    private readonly CustomerRepository _customerRepository = customerRepository;
-
-
-    public bool CreateOrder(OrderRegistrationDto order)
+    public class OrderPaymentManagementService
     {
-        try
+        private readonly OrderRepository _orderRepository;
+        private readonly PaymentMethodRepository _paymentMethodRepository;
+        private readonly CustomerRepository _customerRepository;
+
+        public OrderPaymentManagementService(OrderRepository orderRepository, PaymentMethodRepository paymentMethodRepository, CustomerRepository customerRepository)
         {
-            var existingCustomer = _customerRepository.GetOne(x => x.CustomerNumber == order.CustomerNumber);
+            _orderRepository = orderRepository;
+            _paymentMethodRepository = paymentMethodRepository;
+            _customerRepository = customerRepository;
+        }
 
-            if (existingCustomer != null)
+        public async Task<bool> CreateOrder(OrderRegistrationDto order)
+        {
+            try
             {
-                existingCustomer.FirstName = order.FirstName;
-                existingCustomer.LastName = order.LastName;
-                existingCustomer.Email = order.Email;
+                var existingCustomer = await _customerRepository.GetOne(x => x.CustomerNumber == order.CustomerNumber);
 
-                var newOrder = new OrderEntity
+                if (existingCustomer != null)
                 {
-                    OrderDate = DateTime.Now,
-                    CustomerNumber = order.CustomerNumber,
-                    Customer = existingCustomer,
-                };
+                    existingCustomer.FirstName = order.FirstName;
+                    existingCustomer.LastName = order.LastName;
+                    existingCustomer.Email = order.Email;
 
-                var paymentMethod = _paymentMethodRepository.GetOne(x => x.PaymentMethodName == order.PaymentMethodName);
-                if (paymentMethod == null)
-                {
-                    paymentMethod = _paymentMethodRepository.Create(new PaymentMethodEntity
+                    var newOrder = new OrderEntity
                     {
-                        PaymentMethodName = order.PaymentMethodName,
-                        Description = order.Description,
-                        Orders = new List<OrderEntity> { newOrder }
-                    });
-                }
-                else
-                {
-                    paymentMethod.Orders.Add(newOrder);
-                }
+                        OrderDate = DateTime.Now,
+                        CustomerNumber = order.CustomerNumber,
+                        Customer = existingCustomer,
+                    };
 
-                _orderRepository.Create(newOrder);
+                    var paymentMethod = await _paymentMethodRepository.GetOne(x => x.PaymentMethodName == order.PaymentMethodName);
+                    if (paymentMethod == null)
+                    {
+                        paymentMethod = await _paymentMethodRepository.Create(new PaymentMethodEntity
+                        {
+                            PaymentMethodName = order.PaymentMethodName,
+                            Description = order.Description,
+                            Orders = new List<OrderEntity> { newOrder }
+                        });
+                    }
+                    else
+                    {
+                        paymentMethod.Orders.Add(newOrder);
+                    }
 
-                return true;
+                    await _orderRepository.Create(newOrder);
+
+                    return true;
+                }
             }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine(ex.Message);
-        }
-        return false;
-    }
-    public IEnumerable<OrderEntity> GetAllOrders()
-    {
-        try
-        {
-            var orders = _orderRepository.GetAll();
-            var customers = _customerRepository.GetAll();
-
-            if (orders != null && customers != null)
+            catch (Exception ex)
             {
-                foreach (var order in orders)
-                {
-                    var matchingCustomer = customers.FirstOrDefault(customer => customer.CustomerNumber == order.CustomerNumber);
+                Debug.WriteLine(ex.Message);
+            }
+            return false;
+        }
 
-                    if (matchingCustomer != null)
+        public async Task<IEnumerable<OrderEntity>> GetAllOrders()
+        {
+            try
+            {
+                var orders = await _orderRepository.GetAll();
+                var customers = await _customerRepository.GetAll();
+
+                if (orders != null && customers != null)
+                {
+                    foreach (var order in orders)
                     {
-                        order.Customer = matchingCustomer;
+                        var matchingCustomer = customers.FirstOrDefault(customer => customer.CustomerNumber == order.CustomerNumber);
+
+                        if (matchingCustomer != null)
+                        {
+                            order.Customer = matchingCustomer;
+                        }
+                    }
+
+                    return orders;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+            return Enumerable.Empty<OrderEntity>();
+        }
+
+        public async Task<OrderDto> GetOneOrder(int orderNumber)
+        {
+            try
+            {
+                var existingOrder = await _orderRepository.GetOne(x => x.OrderNumber == orderNumber);
+
+                if (existingOrder != null)
+                {
+                    var order = new OrderDto
+                    {
+                        OrderDate = existingOrder.OrderDate,
+                        CustomerNumber = existingOrder.CustomerNumber,
+                        FirstName = existingOrder.Customer.FirstName,
+                        LastName = existingOrder.Customer.LastName,
+                        Email = existingOrder.Customer.Email,
+                    };
+
+                    var firstAddress = existingOrder.Customer.CustomerAddresses.FirstOrDefault();
+
+                    if (firstAddress != null)
+                    {
+                        order.StreetName = firstAddress.Address.StreetName;
+                        order.City = firstAddress.Address.City;
+                        order.PostalCode = firstAddress.Address.PostalCode;
+                        order.Country = firstAddress.Address.Country;
+                    }
+
+                    var existingPaymentMethod = await _paymentMethodRepository.GetOne(x => x.Orders.Any(o => o.OrderNumber == orderNumber));
+                    if (existingPaymentMethod != null)
+                    {
+                        order.PaymentMethodName = existingPaymentMethod.PaymentMethodName;
+                        order.Description = existingPaymentMethod.Description;
+                    }
+                    return order;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+            return null!;
+        }
+
+        public async Task<bool> UpdateOrder(OrderDto order, int orderNumber)
+        {
+            try
+            {
+                var existingOrder = await _orderRepository.GetOne(x => x.OrderNumber == orderNumber);
+                if (existingOrder != null)
+                {
+
+                    existingOrder.OrderDate = order.OrderDate;
+                    existingOrder.CustomerNumber = order.CustomerNumber;
+
+                    var existingPaymentMethod = await _paymentMethodRepository.GetOne(x => x.Orders.Any(o => o.OrderNumber == orderNumber));
+
+                    if (existingPaymentMethod != null)
+                    {
+                        existingPaymentMethod.PaymentMethodName = order.PaymentMethodName;
+                        existingPaymentMethod.Description = order.Description;
+
+                        await _paymentMethodRepository.Update(x => x.PaymentMethodId == existingPaymentMethod.PaymentMethodId, existingPaymentMethod);
+                    }
+                    else
+                    {
+                        existingPaymentMethod = await _paymentMethodRepository.Create(new PaymentMethodEntity
+                        {
+                            PaymentMethodName = order.PaymentMethodName,
+                            Description = order.Description,
+                            Orders = new List<OrderEntity> { existingOrder }
+                        });
+                    }
+
+                    await _orderRepository.Update(x => x.OrderNumber == orderNumber, existingOrder);
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
+
+            return false;
+        }
+
+        public async Task<bool> DeleteOrder(int orderNumber)
+        {
+            try
+            {
+                var existingOrder = await _orderRepository.GetOne(x => x.OrderNumber == orderNumber);
+                if (existingOrder != null)
+                {
+                    var existingPaymentMethod = await _paymentMethodRepository.GetOne(x => x.Orders == x.Orders);
+                    if (existingPaymentMethod != null)
+                    {
+                        await _paymentMethodRepository.Delete(x => x.PaymentMethodId == existingPaymentMethod.PaymentMethodId);
+                        await _orderRepository.Delete(x => x.OrderNumber == orderNumber);
                     }
                 }
-
-                return orders;
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine(ex.Message);
-        }
-
-        return Enumerable.Empty<OrderEntity>();
-    }
-    public OrderDto GetOneOrder(int orderNumber)
-    {
-        try
-        {
-            var existingOrder = _orderRepository.GetOne(x => x.OrderNumber == orderNumber);
-
-            if (existingOrder != null)
-            {
-                var order = new OrderDto
-                {
-                    OrderDate = existingOrder.OrderDate,
-                    CustomerNumber = existingOrder.CustomerNumber,
-                    FirstName = existingOrder.Customer.FirstName,
-                    LastName = existingOrder.Customer.LastName,
-                    Email = existingOrder.Customer.Email,
-                };
-
-                var firstAddress = existingOrder.Customer.CustomerAddresses.FirstOrDefault();
-
-                if (firstAddress != null)
-                {
-                    order.StreetName = firstAddress.Address.StreetName;
-                    order.City = firstAddress.Address.City;
-                    order.PostalCode = firstAddress.Address.PostalCode;
-                    order.Country = firstAddress.Address.Country;
-                }
-
-                var existingPaymentMethod = _paymentMethodRepository.GetOne(x => x.Orders.Any(o => o.OrderNumber == orderNumber));
-                if (existingPaymentMethod != null)
-                {
-                    order.PaymentMethodName = existingPaymentMethod.PaymentMethodName;
-                    order.Description = existingPaymentMethod.Description;
-                }
-                return order;
-            }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine(ex.Message);
-        }
-
-        return null!;
-    }
-    public bool UpdateOrder(OrderDto order, int orderNumber)
-    {
-        try
-        {
-            var existingOrder = _orderRepository.GetOne(x => x.OrderNumber == orderNumber);
-            if (existingOrder != null)
-            {
-
-                existingOrder.OrderDate = order.OrderDate;
-                existingOrder.CustomerNumber = order.CustomerNumber;
-
-                var existingPaymentMethod = _paymentMethodRepository.GetOne(x => x.Orders.Any(o => o.OrderNumber == orderNumber));
-
-                if (existingPaymentMethod != null)
-                {
-                    existingPaymentMethod.PaymentMethodName = order.PaymentMethodName;
-                    existingPaymentMethod.Description = order.Description;
-
-                    _paymentMethodRepository.Update(x => x.PaymentMethodId == existingPaymentMethod.PaymentMethodId, existingPaymentMethod);
-                }
-                else
-                {
-                    existingPaymentMethod = _paymentMethodRepository.Create(new PaymentMethodEntity
-                    {
-                        PaymentMethodName = order.PaymentMethodName,
-                        Description = order.Description,
-                        Orders = new List<OrderEntity> { existingOrder }
-                    });
-                }
-
-                _orderRepository.Update(x => x.OrderNumber == orderNumber, existingOrder);
-
                 return true;
             }
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine(ex.Message);
-        }
-
-        return false;
-    }
-    public bool DeleteOrder(int orderNumber)
-    {
-        try
-        {
-            var existingOrder = _orderRepository.GetOne(x => x.OrderNumber == orderNumber);
-            if (existingOrder != null)
+            catch (Exception ex)
             {
-                var existingPaymentMethod = _paymentMethodRepository.GetOne(x => x.Orders == x.Orders);
-                if (existingPaymentMethod != null)
-                {
-                    _paymentMethodRepository.Delete(x => x.PaymentMethodId == existingPaymentMethod.PaymentMethodId);
-                    _orderRepository.Delete(x => x.OrderNumber == orderNumber);
-                }
+                Debug.WriteLine(ex.Message);
             }
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine(ex.Message);
-        }
 
-        return false;
+            return false;
+        }
     }
 }
 

@@ -9,20 +9,18 @@ namespace Infrastructure.Repositories;
 public class CustomerRepository(CustomerManagementContext context) : GenericRepository<CustomerEntity, CustomerManagementContext>(context)
 {
     private readonly CustomerManagementContext _context = context;
-    public override CustomerEntity GetOne(Expression<Func<CustomerEntity, bool>> predicate)
+
+    public override async Task<CustomerEntity> GetOne(Expression<Func<CustomerEntity, bool>> predicate)
     {
         try
         {
-            var entityToFind = _context.Customers
-                .Include (x => x.Role)
+            var entityToFind = await _context.Customers
+                .Include(x => x.Role)
                 .Include(x => x.CustomerAddresses)
                     .ThenInclude(x => x.Address)
-                .FirstOrDefault(predicate);
+                .FirstOrDefaultAsync(predicate);
 
-            if (entityToFind != null)
-            {
-                return entityToFind;
-            }
+            return entityToFind!;
         }
         catch (Exception ex)
         {

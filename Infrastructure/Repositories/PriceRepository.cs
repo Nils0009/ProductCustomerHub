@@ -3,11 +3,7 @@ using Infrastructure.Entities;
 
 namespace Infrastructure.Repositories;
 
-public class PriceRepository : GenericRepository<PriceEntity, ProductCatalogContext>
+public class PriceRepository(ProductCatalogContext context) : GenericRepository<PriceEntity, ProductCatalogContext>(context)
 {
-    private readonly ProductCatalogContext _context;
-    public PriceRepository(ProductCatalogContext context) : base(context)
-    {
-        _context = context;
-    }
+    private readonly ProductCatalogContext _context = context;
 }

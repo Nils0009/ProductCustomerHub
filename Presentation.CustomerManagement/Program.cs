@@ -18,6 +18,7 @@ var builder = Host.CreateDefaultBuilder().ConfigureServices(services =>
     services.AddScoped<OrderRepository>();
     services.AddScoped<PaymentMethodRepository>();
     services.AddScoped<RoleRepository>();
+
     services.AddScoped<CategoryRepository>();
     services.AddScoped<ManufacturerRepository>();
     services.AddScoped<PriceRepository>();
@@ -33,5 +34,5 @@ var builder = Host.CreateDefaultBuilder().ConfigureServices(services =>
 Console.Clear();
 
 var menuService = builder.Services.GetRequiredService<MenuService>();
-menuService.ShowMainMenu();
+await menuService.ShowMainMenu();
 

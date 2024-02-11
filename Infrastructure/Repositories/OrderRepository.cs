@@ -10,20 +10,17 @@ public class OrderRepository(CustomerManagementContext context) : GenericReposit
 {
     private readonly CustomerManagementContext _context = context;
 
-    public override OrderEntity GetOne(Expression<Func<OrderEntity, bool>> predicate)
+    public override async Task<OrderEntity> GetOne(Expression<Func<OrderEntity, bool>> predicate)
     {
         try
         {
-            var entityToFind = _context.Orders
+            var entityToFind = await _context.Orders
                 .Include(x => x.Customer)
                     .ThenInclude(x => x.CustomerAddresses)
                     .ThenInclude(x => x.Address)
-                .FirstOrDefault(predicate);
+                .FirstOrDefaultAsync(predicate);
 
-            if (entityToFind != null)
-            {
-                return entityToFind;
-            }
+            return entityToFind!;
         }
         catch (Exception ex)
         {

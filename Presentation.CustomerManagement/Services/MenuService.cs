@@ -1,6 +1,5 @@
 ﻿using Infrastructure.Dtos;
 using Infrastructure.Entities;
-using Infrastructure.Migrations;
 using Infrastructure.Services;
 using System.Diagnostics;
 
@@ -12,13 +11,12 @@ public class MenuService(CustomerManagementService customerManagementService, Or
     private readonly OrderPaymentManagementService _orderPaymentManagementService = orderPaymentManagementService;
     private readonly ProductCatalogService _productCatalogService = productCatalogService;
 
-    public void ShowMainMenu()
+    public async Task ShowMainMenu()
     {
         try
         {
             while (true)
             {
-
                 Console.WriteLine("##MENU##");
                 Console.WriteLine();
                 Console.WriteLine("[1] Customer Management");
@@ -47,26 +45,26 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                         switch (userCustomerOption)
                         {
                             case 1:
-                                ShowAddCustomerMenu();
+                                await ShowAddCustomerMenu();
                                 break;
                             case 2:
-                                ShowCustomerSearchMenu();
+                                await ShowCustomerSearchMenu();
                                 break;
                             case 3:
-                                ShowAllCustomersMenu();
+                                await ShowAllCustomersMenu();
                                 break;
                             case 4:
-                                ShowCustomerUpdateMenu();
+                                await ShowCustomerUpdateMenu();
                                 break;
                             case 5:
-                                ShowRemoveCustomerMenu();
+                                await ShowRemoveCustomerMenu();
                                 break;
                             case 6:
                                 ShowExitMenu();
                                 break;
 
                             default:
-                                Console.WriteLine("Enter a valid inpuit!");
+                                Console.WriteLine("Enter a valid input!");
                                 break;
                         }
                         Console.ReadKey();
@@ -88,25 +86,25 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                         switch (userOrderOption)
                         {
                             case 1:
-                                ShowAddOrderMenu();
+                                await ShowAddOrderMenu();
                                 break;
                             case 2:
-                                ShowOrderSearchMenu();
+                                await ShowOrderSearchMenu();
                                 break;
                             case 3:
-                                ShowAllOrdersMenu();
+                                await ShowAllOrdersMenu();
                                 break;
                             case 4:
-                                ShowOrderUpdateMenu();
+                                await ShowOrderUpdateMenu();
                                 break;
                             case 5:
-                                ShowRemoveOrderMenu();
+                                await ShowRemoveOrderMenu();
                                 break;
                             case 6:
                                 ShowExitMenu();
                                 break;
                             default:
-                                Console.WriteLine("Enter a valid inpuit!");
+                                Console.WriteLine("Enter a valid input!");
                                 break;
                         }
                         Console.ReadKey();
@@ -127,25 +125,25 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                         switch (userProductOption)
                         {
                             case 1:
-                                ShowAddProductMenu();
+                                await ShowAddProductMenu();
                                 break;
                             case 2:
-                                ShowProductSearchMenu();
+                                await ShowProductSearchMenu();
                                 break;
                             case 3:
-                                ShowAllProductsMenu();
+                                await ShowAllProductsMenu();
                                 break;
                             case 4:
-                                ShowProductUpdateMenu();
+                                await ShowProductUpdateMenu();
                                 break;
                             case 5:
-                                ShowRemoveProductMenu();
+                                await ShowRemoveProductMenu();
                                 break;
                             case 6:
                                 ShowExitMenu();
                                 break;
                             default:
-                                Console.WriteLine("Enter a valid inpuit!");
+                                Console.WriteLine("Enter a valid input!");
                                 break;
                         }
                         Console.ReadKey();
@@ -166,7 +164,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
     }
 
 
-    public void ShowAddProductMenu()
+    public async Task ShowAddProductMenu()
     {
         try
         {
@@ -208,7 +206,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 newPrice.UnitPrice = validatedPrice;
                 newProduct.Price = newPrice; // Tilldela rätt instans till newProduct.Price
 
-                var savedProduct = _productCatalogService.CreateProduct(newProduct);
+                var savedProduct = await _productCatalogService.CreateProduct(newProduct);
                 if (savedProduct == false)
                 {
                     Console.WriteLine();
@@ -222,14 +220,13 @@ public class MenuService(CustomerManagementService customerManagementService, Or
 
                 break;
             }
-
         }
         catch (Exception ex)
         {
             Debug.WriteLine(ex.Message);
         }
     }
-    public void ShowAllProductsMenu()
+    public async Task ShowAllProductsMenu()
     {
         try
         {
@@ -238,17 +235,15 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 ShowMenuText("Products list");
                 Console.WriteLine("--------------\n");
 
-                var productList = _productCatalogService.GetAllProducts();
+                var productList = await _productCatalogService.GetAllProducts();
                 if (productList != null && productList.Any())
                 {
                     foreach (var product in productList)
                     {
-
                         Console.WriteLine($"Article Number: {product.ArticleNumber}\n" +
                                           $"Title: {product.Title}\n" +
                                           $"Description: {product.Description}\n" +
                                           "\n-------------------\n");
-
                     };
                     break;
                 }
@@ -265,7 +260,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Debug.WriteLine(ex.Message);
         }
     }
-    public void ShowProductSearchMenu()
+    public async Task ShowProductSearchMenu()
     {
         try
         {
@@ -275,7 +270,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             var userInput = Console.ReadLine();
             if (userInput != null)
             {
-                var existingProduct = _productCatalogService.GetOneProduct(userInput);
+                var existingProduct = await _productCatalogService.GetOneProduct(userInput);
                 if (existingProduct != null)
                 {
                     ShowMenuText("Product was found");
@@ -289,17 +284,13 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                                       "\n-------------------\n");
                 }
             }
-
-
         }
         catch (Exception ex)
         {
             Debug.WriteLine(ex);
         }
-
     }
-
-    public void ShowProductUpdateMenu()
+    public async Task ShowProductUpdateMenu()
     {
         try
         {
@@ -309,7 +300,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 Console.WriteLine("----------------\n");
                 Console.Write("Update product with article number: ");
                 string productUpdateInput = Console.ReadLine()!;
-                var productToBeUpdated = _productCatalogService.GetOneProduct(productUpdateInput);
+                var productToBeUpdated = await _productCatalogService.GetOneProduct(productUpdateInput);
                 Thread.Sleep(500);
                 Console.Clear();
 
@@ -324,7 +315,6 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                                       $"Category: {productToBeUpdated.Category.CategoryName}\n" +
                                       $"Price: {productToBeUpdated.Price.UnitPrice}\n" +
                                       "\n-------------------\n");
-
 
                     Console.Write("\nDo you want to update? (y/n): ");
                     string ProductUpdateAnswerInput = ValidateText(Console.ReadLine()!);
@@ -357,9 +347,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                         int.TryParse(Console.ReadLine()!, out int validatedPrice);
                         productToBeUpdated.Price.UnitPrice = validatedPrice;
 
-
-
-                        _productCatalogService.UpdateProduct(productToBeUpdated, productUpdateInput);
+                        await _productCatalogService.UpdateProduct(productToBeUpdated, productUpdateInput);
 
                         ShowMenuText("Product was updated");
                         break;
@@ -382,16 +370,15 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Debug.WriteLine(ex.Message);
         }
     }
-    public void ShowRemoveProductMenu()
+    public async Task ShowRemoveProductMenu()
     {
         try
         {
-
             ShowMenuText("Delete product");
             Console.WriteLine("-----------------\n");
             Console.Write("Remove product with article number: ");
             string userRemoveInput = Console.ReadLine()!;
-            var productToRemove = _productCatalogService.GetOneProduct(userRemoveInput);
+            var productToRemove = await _productCatalogService.GetOneProduct(userRemoveInput);
 
             if (productToRemove != null)
             {
@@ -411,7 +398,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 Console.Clear();
                 if (productRemoveInputAnswer == "y")
                 {
-                    var removeProduct = _productCatalogService.DeleteProduct(userRemoveInput);
+                    var removeProduct = await _productCatalogService.DeleteProduct(userRemoveInput);
                     ShowMenuText("Product was removed");
                     Thread.Sleep(1000);
                 }
@@ -427,10 +414,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Debug.WriteLine(ex.Message);
         }
     }
-
-
-
-    public void ShowAddOrderMenu()
+    public async Task ShowAddOrderMenu()
     {
         try
         {
@@ -442,7 +426,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 Console.WriteLine("-------------");
                 Console.WriteLine();
                 Console.Write("Customer number: ");
-                var existingCustomer = _customerManagementService.GetCustomerWithCustomerNumber(Console.ReadLine()!);
+                var existingCustomer = await _customerManagementService.GetCustomerWithCustomerNumber(Console.ReadLine()!);
 
                 if (existingCustomer != null)
                 {
@@ -454,6 +438,9 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                     Console.WriteLine($"Last name: {existingCustomer.LastName}");
                     Console.WriteLine($"Email: {existingCustomer.Email}");
                     Console.WriteLine($"Role name: {existingCustomer.RoleName}");
+                    Console.WriteLine();
+
+                    Console.WriteLine("-------------");
                     Console.WriteLine();
 
                     Console.WriteLine("[1] Add customer to new order");
@@ -477,7 +464,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                             Console.Write("Description: ");
                             newOrder.Description = Console.ReadLine()!;
 
-                            bool savedOrder = _orderPaymentManagementService.CreateOrder(newOrder);
+                            bool savedOrder = await _orderPaymentManagementService.CreateOrder(newOrder);
                             if (!savedOrder)
                             {
                                 Console.WriteLine();
@@ -510,7 +497,8 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Debug.WriteLine(ex.Message);
         }
     }
-    public void ShowAllOrdersMenu()
+
+    public async Task ShowAllOrdersMenu()
     {
         try
         {
@@ -519,12 +507,11 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 ShowMenuText("Order list");
                 Console.WriteLine("--------------\n");
 
-                var orderList = _orderPaymentManagementService.GetAllOrders();
+                var orderList = await _orderPaymentManagementService.GetAllOrders();
                 if (orderList != null && orderList.Any())
                 {
                     foreach (var order in orderList)
                     {
-
                         Console.WriteLine($"Order date: {order.OrderDate}\n" +
                                           $"Order number: {order.OrderNumber}\n" +
                                           $"Customer number: {order.CustomerNumber}\n" +
@@ -532,8 +519,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                                           $"Last name: {order.Customer.LastName}\n" +
                                           $"Email: {order.Customer.Email}\n" +
                                           "\n-------------------\n");
-
-                    };
+                    }
                     break;
                 }
                 else
@@ -549,7 +535,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Debug.WriteLine(ex.Message);
         }
     }
-    public void ShowOrderSearchMenu()
+    public async Task ShowOrderSearchMenu()
     {
         try
         {
@@ -557,7 +543,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Console.WriteLine("----------------\n");
             Console.Write("Search order with order number: ");
             int.TryParse(Console.ReadLine(), out int userInput);
-            var existingOrder = _orderPaymentManagementService.GetOneOrder(userInput);
+            var existingOrder = await _orderPaymentManagementService.GetOneOrder(userInput);
 
             Thread.Sleep(500);
             Console.Clear();
@@ -587,9 +573,8 @@ public class MenuService(CustomerManagementService customerManagementService, Or
         {
             Debug.WriteLine(ex);
         }
-
     }
-    public void ShowOrderUpdateMenu()
+    public async Task ShowOrderUpdateMenu()
     {
         try
         {
@@ -599,10 +584,9 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 Console.WriteLine("----------------\n");
                 Console.Write("Order number: ");
                 int.TryParse(Console.ReadLine()!, out int userInput);
-                var orderToBeUpdated = _orderPaymentManagementService.GetOneOrder(userInput);
+                var orderToBeUpdated = await _orderPaymentManagementService.GetOneOrder(userInput);
                 Thread.Sleep(500);
                 Console.Clear();
-
 
                 if (orderToBeUpdated != null)
                 {
@@ -617,7 +601,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
 
                     if (OrderUpdateInput == "y")
                     {
-                        Console.Write("Paymentmethod name:: ");
+                        Console.Write("Payment Method: ");
                         var validatedPaymentmethod = Console.ReadLine()!;
                         orderToBeUpdated.PaymentMethodName = validatedPaymentmethod;
 
@@ -625,7 +609,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                         var validatedDescription = Console.ReadLine()!;
                         orderToBeUpdated.Description = validatedDescription;
 
-                        _orderPaymentManagementService.UpdateOrder(orderToBeUpdated, userInput);
+                        await _orderPaymentManagementService.UpdateOrder(orderToBeUpdated, userInput);
 
                         ShowMenuText("Order was updated");
 
@@ -649,7 +633,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Debug.WriteLine(ex.Message);
         }
     }
-    public void ShowRemoveOrderMenu()
+    public async Task ShowRemoveOrderMenu()
     {
         try
         {
@@ -659,11 +643,11 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 Console.WriteLine("-----------------\n");
                 Console.Write("Remove order with order number: ");
                 int.TryParse(Console.ReadLine()!, out int orderRemoveInput);
-                var orderToRemoveFound = _orderPaymentManagementService.GetOneOrder(orderRemoveInput);
+                var orderToRemoveFound = await _orderPaymentManagementService.GetOneOrder(orderRemoveInput);
 
                 if (orderToRemoveFound != null)
                 {
-                    Console.WriteLine($"Order number: {orderToRemoveFound.OrderNumber}\nOrder date: {orderToRemoveFound.OrderDate}\nCustomer number: {orderToRemoveFound.CustomerNumber}\nFirst name: {orderToRemoveFound.FirstName}\nLast name: {orderToRemoveFound.LastName}\nEmail: {orderToRemoveFound.Email}");
+                    Console.WriteLine($"Order date: {orderToRemoveFound.OrderDate}\nCustomer number: {orderToRemoveFound.CustomerNumber}\nFirst name: {orderToRemoveFound.FirstName}\nLast name: {orderToRemoveFound.LastName}\nEmail: {orderToRemoveFound.Email}");
                     Console.WriteLine();
                     Console.Write("Do you want to remove? (y/n): ");
                     string orderRemoveInputAnswer = ValidateText(Console.ReadLine()!);
@@ -671,7 +655,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                     Console.Clear();
                     if (orderRemoveInputAnswer == "y")
                     {
-                        var removeCustomer = _orderPaymentManagementService.DeleteOrder(orderRemoveInput);
+                        var removeCustomer = await _orderPaymentManagementService.DeleteOrder(orderRemoveInput);
                         ShowMenuText("Order was removed");
                         Thread.Sleep(1000);
                         break;
@@ -693,7 +677,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
     }
 
 
-    public void ShowAddCustomerMenu()
+    public async Task ShowAddCustomerMenu()
     {
         try
         {
@@ -717,7 +701,6 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 if (validatedLastName == null) { break; }
                 newCustomer.LastName = validatedLastName;
 
-
                 Console.Write("Email: ");
                 var validatedEmail = Console.ReadLine()!;
                 validatedEmail = ValidateEmail(validatedEmail);
@@ -734,7 +717,6 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 var validatedStreetName = Console.ReadLine()!;
                 if (validatedStreetName == null) { break; }
                 newCustomer.StreetName = validatedStreetName;
-
 
                 Console.Write("City: ");
                 var validatedCity = Console.ReadLine()!;
@@ -754,11 +736,11 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 if (validatedCountry == null) { break; }
                 newCustomer.Country = validatedCountry;
 
-                var savedCustomer = _customerManagementService.CreateCustomer(newCustomer);
+                var savedCustomer = await _customerManagementService.CreateCustomer(newCustomer);
                 if (savedCustomer != true)
                 {
                     Console.WriteLine();
-                    Console.WriteLine("Customer already in list");
+                    Console.WriteLine("Customer already in the list");
                     break;
                 }
                 Console.WriteLine();
@@ -773,15 +755,15 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Debug.WriteLine(ex.Message);
         }
     }
-    public void ShowAllCustomersMenu()
+    public async Task ShowAllCustomersMenu()
     {
         try
         {
             while (true)
             {
                 ShowMenuText("Customer list");
-                Console.WriteLine("--------------\n");
-                var customerList = _customerManagementService.GetAllCustomers();
+                Console.WriteLine("-----------------\n");
+                var customerList = await _customerManagementService.GetAllCustomers();
                 if (customerList != null && customerList.Any())
                 {
                     foreach (var customer in customerList)
@@ -797,7 +779,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 }
                 else
                 {
-                    Console.WriteLine("The contact list is empty!");
+                    Console.WriteLine("The customer list is empty!");
                     Console.WriteLine("--------------------------");
                 }
                 break;
@@ -808,7 +790,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Debug.WriteLine(ex.Message);
         }
     }
-    public void ShowCustomerSearchMenu()
+    public async Task ShowCustomerSearchMenu()
     {
         try
         {
@@ -816,43 +798,43 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Console.WriteLine("----------------\n");
             Console.WriteLine("[1] Search with email");
             Console.WriteLine("[2] Search with customer number");
-            int.TryParse(Console.ReadLine(), out int result);
+            int.TryParse(Console.ReadLine(), out var result);
 
             switch (result)
             {
                 case 1:
                     Console.Write("Search customer with email: ");
-                    var customerFound = _customerManagementService.GetOneCustomer(ValidateEmail(Console.ReadLine()!));
+                    var customerFound = await _customerManagementService.GetOneCustomer(ValidateEmail(Console.ReadLine()!));
                     Thread.Sleep(500);
                     Console.Clear();
                     if (customerFound != null)
                     {
-                        ShowMenuText("Contact was found");
+                        ShowMenuText("Customer was found");
                         Console.WriteLine("-------------------");
                         Console.WriteLine($"First name: {customerFound.FirstName}\n" +
                                           $"Last name: {customerFound.LastName}\n" +
                                           $"Email: {customerFound.Email}\n" +
                                           $"Street name: {customerFound.StreetName}\n" +
                                           $"City: {customerFound.City}\n" +
-                                          $"Postalcode: {customerFound.PostalCode}\n" +
+                                          $"Postal code: {customerFound.PostalCode}\n" +
                                           $"Country: {customerFound.Country}\n" +
                                           $"Role name: {customerFound.RoleName}\n" +
                                           "\n-------------------\n");
                     }
                     else
                     {
-                        ShowMenuText("customer was not found");
+                        ShowMenuText("Customer was not found");
                         Console.WriteLine("------------------------");
                     }
                     break;
                 case 2:
                     Console.Write("Search customer with customer number: ");
-                    var customer = _customerManagementService.GetCustomerWithCustomerNumber(Console.ReadLine()!);
+                    var customer = await _customerManagementService.GetCustomerWithCustomerNumber(Console.ReadLine()!);
                     Thread.Sleep(500);
                     Console.Clear();
                     if (customer != null)
                     {
-                        ShowMenuText("Contact was found");
+                        ShowMenuText("Customer was found");
                         Console.WriteLine("-------------------");
                         Console.WriteLine($"First name: {customer.FirstName}\n" +
                                           $"Last name: {customer.LastName}\n" +
@@ -862,7 +844,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                     }
                     else
                     {
-                        ShowMenuText("customer was not found");
+                        ShowMenuText("Customer was not found");
                         Console.WriteLine("------------------------");
                     }
                     break;
@@ -876,9 +858,8 @@ public class MenuService(CustomerManagementService customerManagementService, Or
         {
             Debug.WriteLine(ex);
         }
-
     }
-    public void ShowCustomerUpdateMenu()
+    public async Task ShowCustomerUpdateMenu()
     {
         try
         {
@@ -888,25 +869,24 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 Console.WriteLine("----------------\n");
                 Console.Write("Update customer with email: ");
                 string customerUpdateEmailInput = ValidateEmail(Console.ReadLine()!);
-                var customerToBeUpdated = _customerManagementService.GetOneCustomer(customerUpdateEmailInput);
+                var customerToBeUpdated = await _customerManagementService.GetOneCustomer(customerUpdateEmailInput);
                 Thread.Sleep(500);
                 Console.Clear();
 
-
                 if (customerToBeUpdated != null)
                 {
-                    ShowMenuText("Contact was found");
+                    ShowMenuText("Customer was found");
                     Console.WriteLine("-------------------");
                     Console.WriteLine();
                     Console.WriteLine($"First name: {customerToBeUpdated.FirstName}\n" +
-                                          $"Last name: {customerToBeUpdated.LastName}\n" +
-                                          $"Email: {customerToBeUpdated.Email}\n" +
-                                          $"Street name: {customerToBeUpdated.StreetName}\n" +
-                                          $"City: {customerToBeUpdated.City}\n" +
-                                          $"Postalcode: {customerToBeUpdated.PostalCode}\n" +
-                                          $"Country: {customerToBeUpdated.Country}\n" +
-                                          $"Role name: {customerToBeUpdated.RoleName}\n" +
-                                          "\n-------------------\n");
+                                      $"Last name: {customerToBeUpdated.LastName}\n" +
+                                      $"Email: {customerToBeUpdated.Email}\n" +
+                                      $"Street name: {customerToBeUpdated.StreetName}\n" +
+                                      $"City: {customerToBeUpdated.City}\n" +
+                                      $"Postal code: {customerToBeUpdated.PostalCode}\n" +
+                                      $"Country: {customerToBeUpdated.Country}\n" +
+                                      $"Role name: {customerToBeUpdated.RoleName}\n" +
+                                      "\n-------------------\n");
 
                     Console.Write("\nDo you want to update? (y/n): ");
                     string CustomerUpdateAnswerInput = ValidateText(Console.ReadLine()!);
@@ -954,9 +934,9 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                         validatedCountry = ValidateText(validatedCountry);
                         customerToBeUpdated.Country = validatedCountry;
 
-                        _customerManagementService.UpdateCustomer(customerToBeUpdated, customerUpdateEmailInput);
+                        await _customerManagementService.UpdateCustomer(customerToBeUpdated, customerUpdateEmailInput);
 
-                        ShowMenuText("Contact was updated");
+                        ShowMenuText("Customer was updated");
                         break;
                     }
                     else
@@ -977,11 +957,10 @@ public class MenuService(CustomerManagementService customerManagementService, Or
             Debug.WriteLine(ex.Message);
         }
     }
-    public void ShowRemoveCustomerMenu()
+    public async Task ShowRemoveCustomerMenu()
     {
         try
         {
-
             ShowMenuText("Delete customer");
             Console.WriteLine("-----------------\n");
             Console.WriteLine("[1] Remove customer with email");
@@ -993,7 +972,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 case 1:
                     Console.Write("Remove customer with email: ");
                     string customerRemoveInput = ValidateEmail(Console.ReadLine()!);
-                    var customerToRemoveFound = _customerManagementService.GetOneCustomer(customerRemoveInput);
+                    var customerToRemoveFound = await _customerManagementService.GetOneCustomer(customerRemoveInput);
 
                     if (customerToRemoveFound != null)
                     {
@@ -1005,7 +984,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                         Console.Clear();
                         if (customerRemoveInputAnswer == "y")
                         {
-                            var removeCustomer = _customerManagementService.DeleteCustomer(customerRemoveInput);
+                            await _customerManagementService.DeleteCustomer(customerRemoveInput);
                             ShowMenuText("Customer was removed");
                             Thread.Sleep(1000);
                         }
@@ -1019,7 +998,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                 case 2:
                     Console.Write("Remove customer with customer number: ");
                     string userRemoveInput = Console.ReadLine()!;
-                    var customerToRemove = _customerManagementService.GetCustomerWithCustomerNumber(userRemoveInput);
+                    var customerToRemove = await _customerManagementService.GetCustomerWithCustomerNumber(userRemoveInput);
 
                     if (customerToRemove != null)
                     {
@@ -1031,7 +1010,7 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                         Console.Clear();
                         if (customerRemoveInputAnswer == "y")
                         {
-                            var removeCustomer = _customerManagementService.DeleteCustomer(customerToRemove.Email);
+                            await _customerManagementService.DeleteCustomer(customerToRemove.Email);
                             ShowMenuText("Customer was removed");
                             Thread.Sleep(1000);
                         }
@@ -1046,8 +1025,6 @@ public class MenuService(CustomerManagementService customerManagementService, Or
                     Console.WriteLine("Enter a valid input");
                     break;
             }
-
-
         }
         catch (Exception ex)
         {
@@ -1078,7 +1055,6 @@ public class MenuService(CustomerManagementService customerManagementService, Or
     {
         Console.WriteLine($"\n[{text}]");
     }
-
     public static string ValidateText(string text)
     {
         if (!string.IsNullOrWhiteSpace(text) && !text.Any(char.IsDigit))
@@ -1089,7 +1065,6 @@ public class MenuService(CustomerManagementService customerManagementService, Or
         Console.WriteLine("Invalid input!");
         return null!;
     }
-
     public static string ValidateAll(string value)
     {
         if (!string.IsNullOrWhiteSpace(value))
@@ -1100,7 +1075,6 @@ public class MenuService(CustomerManagementService customerManagementService, Or
         Console.WriteLine("Invalid input!");
         return null!;
     }
-
     public static string ValidateNum(string text)
     {
         if (!string.IsNullOrWhiteSpace(text))
@@ -1111,7 +1085,6 @@ public class MenuService(CustomerManagementService customerManagementService, Or
         Console.WriteLine("Invalid input!");
         return null!;
     }
-
     public static string ValidateEmail(string text)
     {
         if (!string.IsNullOrWhiteSpace(text) && text.Contains("@"))

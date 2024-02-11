@@ -19,5 +19,12 @@ public partial class CustomerManagementContext(DbContextOptions<CustomerManageme
 
         modelBuilder.Entity<CustomerAddressEntity>()
                .HasKey(x => new { x.CustomerNumber, x.AddressId });
+
+        modelBuilder.Entity<OrderEntity>(entity =>
+        {
+            entity.HasKey(e => e.OrderNumber); 
+            entity.Property(e => e.OrderNumber)
+                .ValueGeneratedOnAdd(); 
+        });
     }
 }
